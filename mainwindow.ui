@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1024</width>
+    <height>640</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>1024</width>
+    <height>640</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>Chinese Chess</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="qtchess.qrc">
+    <normaloff>:/images/chess.png</normaloff>:/images/chess.png</iconset>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <widget class="QTableView" name="leftTableView">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>10</y>
+      <width>211</width>
+      <height>241</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnLeftPrevRecord">
+    <property name="geometry">
+     <rect>
+      <x>50</x>
+      <y>260</y>
+      <width>31</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnLeftPrevPage">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>260</y>
+      <width>31</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;&lt;</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnLeftNextRecord">
+    <property name="geometry">
+     <rect>
+      <x>90</x>
+      <y>260</y>
+      <width>31</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&gt;</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnLeftNextPage">
+    <property name="geometry">
+     <rect>
+      <x>140</x>
+      <y>260</y>
+      <width>31</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&gt;&gt;</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnRightNextRecord">
+    <property name="geometry">
+     <rect>
+      <x>910</x>
+      <y>260</y>
+      <width>31</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&gt;</string>
+    </property>
+   </widget>
+   <widget class="QTableView" name="rightTableView">
+    <property name="geometry">
+     <rect>
+      <x>820</x>
+      <y>10</y>
+      <width>201</width>
+      <height>241</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnRightPrevRecord">
+    <property name="geometry">
+     <rect>
+      <x>870</x>
+      <y>260</y>
+      <width>31</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnRightNextPage">
+    <property name="geometry">
+     <rect>
+      <x>960</x>
+      <y>260</y>
+      <width>31</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&gt;&gt;</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnRightPrevPage">
+    <property name="geometry">
+     <rect>
+      <x>830</x>
+      <y>260</y>
+      <width>31</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;&lt;</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1024</width>
+     <height>27</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>文件(&amp;F)</string>
+    </property>
+    <addaction name="actionOpen"/>
+    <addaction name="actionStart"/>
+    <addaction name="actionNewGame"/>
+    <addaction name="actionUndo"/>
+    <addaction name="actionLose"/>
+    <addaction name="actionTie"/>
+    <addaction name="actionSettings"/>
+    <addaction name="actionSave"/>
+    <addaction name="separator"/>
+    <addaction name="actionExit"/>
+   </widget>
+   <widget class="QMenu" name="menu_Help">
+    <property name="title">
+     <string>帮助(&amp;H)</string>
+    </property>
+    <addaction name="actionAbout"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menu_Help"/>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionOpen"/>
+   <addaction name="actionSave"/>
+   <addaction name="actionStart"/>
+   <addaction name="actionNewGame"/>
+   <addaction name="actionUndo"/>
+   <addaction name="actionTie"/>
+   <addaction name="actionLose"/>
+   <addaction name="actionSettings"/>
+   <addaction name="actionAbout"/>
+   <addaction name="separator"/>
+   <addaction name="actionExit"/>
+  </widget>
+  <action name="actionAbout">
+   <property name="icon">
+    <iconset resource="qtchess.qrc">
+     <normaloff>:/images/helpabout.png</normaloff>:/images/helpabout.png</iconset>
+   </property>
+   <property name="text">
+    <string>关于(&amp;A)</string>
+   </property>
+  </action>
+  <action name="actionOpen">
+   <property name="icon">
+    <iconset resource="qtchess.qrc">
+     <normaloff>:/images/fileopen.png</normaloff>:/images/fileopen.png</iconset>
+   </property>
+   <property name="text">
+    <string>打开(&amp;O)</string>
+   </property>
+  </action>
+  <action name="actionStart">
+   <property name="icon">
+    <iconset resource="qtchess.qrc">
+     <normaloff>:/images/start.png</normaloff>:/images/start.png</iconset>
+   </property>
+   <property name="text">
+    <string>开始(&amp;S)</string>
+   </property>
+  </action>
+  <action name="actionNewGame">
+   <property name="icon">
+    <iconset resource="qtchess.qrc">
+     <normaloff>:/images/newgame.png</normaloff>:/images/newgame.png</iconset>
+   </property>
+   <property name="text">
+    <string>新局(&amp;N)</string>
+   </property>
+  </action>
+  <action name="actionTie">
+   <property name="icon">
+    <iconset resource="qtchess.qrc">
+     <normaloff>:/images/tie.png</normaloff>:/images/tie.png</iconset>
+   </property>
+   <property name="text">
+    <string>提和(&amp;T)</string>
+   </property>
+  </action>
+  <action name="actionUndo">
+   <property name="icon">
+    <iconset resource="qtchess.qrc">
+     <normaloff>:/images/fallback.png</normaloff>:/images/fallback.png</iconset>
+   </property>
+   <property name="text">
+    <string>悔棋(&amp;U)</string>
+   </property>
+  </action>
+  <action name="actionLose">
+   <property name="icon">
+    <iconset resource="qtchess.qrc">
+     <normaloff>:/images/fail.png</normaloff>:/images/fail.png</iconset>
+   </property>
+   <property name="text">
+    <string>认输(&amp;L)</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="icon">
+    <iconset resource="qtchess.qrc">
+     <normaloff>:/images/fileexit.png</normaloff>:/images/fileexit.png</iconset>
+   </property>
+   <property name="text">
+    <string>退出(&amp;E)</string>
+   </property>
+  </action>
+  <action name="actionSettings">
+   <property name="icon">
+    <iconset resource="qtchess.qrc">
+     <normaloff>:/images/settings.png</normaloff>:/images/settings.png</iconset>
+   </property>
+   <property name="text">
+    <string>首选项(&amp;P)</string>
+   </property>
+  </action>
+  <action name="actionSave">
+   <property name="icon">
+    <iconset resource="qtchess.qrc">
+     <normaloff>:/images/filesave.png</normaloff>:/images/filesave.png</iconset>
+   </property>
+   <property name="text">
+    <string>保存(&amp;S)</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources>
+  <include location="qtchess.qrc"/>
+ </resources>
+ <connections/>
+</ui>
