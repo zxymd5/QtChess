@@ -1,47 +1,64 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include <QStandardItemModel>
-#include <QPainter>
-#include <QImage>
+#include "commdef.h"
+#include <QSound>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    initMainWindow();
+    move(WINDOW_STARTX, WINDOW_STARTY);
+    chessBoard = new ChessBoard(this);
+    leftStepList = new StepList(this, true);
+    rightStepList = new StepList(this, false);
+    chessHandler = new ChessHandler(this);
+    settingsDialog = new SettingsDialog(this);
+    settingsDialog->setVisible(false);
+
+    initActions();
+}
+
+void MainWindow::initActions()
+{
+    connect(ui->actionStart, SIGNAL(triggered()), this, SLOT(startGame()));
+    connect(ui->actionNewGame, SIGNAL(triggered()), this, SLOT(newGame()));
 }
 
 MainWindow::~MainWindow()
 {
+    delete chessBoard;
+    delete leftStepList;
+    delete rightStepList;
+    delete chessHandler;
     delete ui;
 }
 
-void MainWindow::initMainWindow()
+void MainWindow::startGame()
 {
-    QStandardItemModel *model = new QStandardItemModel(10, 3);
-    model->setHeaderData(0, Qt::Horizontal, tr("序号"));
-    model->setHeaderData(1, Qt::Horizontal, tr("走法"));
-    model->setHeaderData(2, Qt::Horizontal, tr("时间"));
+    settingsDialog->updateDialog();
+    settings();
+    chessHandler->startGame();
+}
 
-    ui->leftTableView->setModel(model);
-    ui->leftTableView->setColumnWidth(0, 30);
-    ui->leftTableView->setColumnWidth(1, 70);
-    ui->leftTableView->setColumnWidth(2, 70);
-
-    for(int i = 0; i < 10; i++)
-    {
-        for(int j = 0; j < 3; j++)
-        {
-            QModelIndex index = model->index(i, j, QModelIndex());
-            model->setData(index, tr("炮四平五"));
-        }
-    }
-
-    QPixmap image;
-    image.load( ":/images/WOOD/BA.GIF" );
-
-    QPainter painter(this);
-    painter.drawPixmap(300,300, image);
+void MainWindow::newGame()
+{
+    chessHandler->newGame();
+    QSound::play(AUDIO_NEW_GAME);
 
 }
+
+void MainWindow::settings()
+{
+    if(settingsDialog->isVisible())
+    {
+        settingsDialog->activateWindow();
+    }
+    else
+    {
+        settingsDialog->show();
+    }
+
+    settingsDialog->exec();
+}
+
