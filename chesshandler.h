@@ -20,8 +20,15 @@ public:
     void resetZobrist();
     void resetChessmanLayout();
     void addChessman(int index, char chessmanType);
+    void delChessman(int index, char chessmanType);
+    void doMove(int index);
+    bool redDoMove(int index);
+    bool blackDoMove(int index);
+
+    const char *getChessman();
 
 signals:
+    void refreshGame(int refreshType);
 
 public slots:
 

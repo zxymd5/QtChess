@@ -91,6 +91,8 @@ static const char RED_ADVISOR = 12;      //红仕
 static const char RED_MINISTER = 13;     //红相
 static const char RED_SOLDIER = 14;      //红兵
 
+static const int EVENT_NEW_GAME = 1;
+
 // 判断棋子是否在棋盘中的数组
 static const char ccInBoard[256] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -215,7 +217,7 @@ static const char ccKnightDelta[4][2] = {{-33, -31}, {-18, 14}, {-14, 18}, {31, 
 static const char ccKnightCheckDelta[4][2] = {{-33, -18}, {-31, -14}, {14, 31}, {18, 33}};
 
 // 棋盘初始设置
-static const char cucpcStartup[256] = {
+static const char STARTUP_LAYOUT[256] = {
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -235,7 +237,7 @@ static const char cucpcStartup[256] = {
 };
 
 // 子力位置价值表
-static const int cucvlPiecePos[7][256] = {
+static const int CHESSMAN_VALUE[7][256] = {
     { // 帅(将)
       0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
       0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -414,12 +416,12 @@ static bool IN_FORT(int sq) {
     return ccInFort[sq] != 0;
 }
 
-// 获得格子的横坐标
+// 获得格子的纵坐标
 static int RANK_Y(int sq) {
     return sq >> 4;
 }
 
-// 获得格子的纵坐标
+// 获得格子的横坐标
 static int FILE_X(int sq) {
     return sq & 15;
 }
@@ -487,6 +489,21 @@ static bool SAME_RANK(int sqSrc, int sqDst) {
 // 是否在同一列
 static bool SAME_FILE(int sqSrc, int sqDst) {
     return ((sqSrc ^ sqDst) & 0x0f) == 0;
+}
+
+// 获得走法的起点
+static int SRC(int mv) {
+  return mv & 255;
+}
+
+// 获得走法的终点
+static int DST(int mv) {
+  return mv >> 8;
+}
+
+// 根据起点和终点获得走法
+static int MOVE(int sqSrc, int sqDst) {
+  return sqSrc + sqDst << 8;
 }
 
 static bool isBlackSide(char chessmanType)

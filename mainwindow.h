@@ -18,12 +18,19 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     void initActions();
+    void processNewGameEvent();
+
     ~MainWindow();
 
 private slots:
     void startGame();
     void newGame();
     void settings();
+    void flipChessBoard();
+
+    void doMove(int index);
+
+    void processEvent(int event);
 
 private:
     Ui::MainWindow *ui;
@@ -32,6 +39,8 @@ private:
     StepList *rightStepList;
     ChessHandler *chessHandler;
     SettingsDialog *settingsDialog;
+    bool gameStarted;
+    bool gameOver;
 };
 
 #endif // MAINWINDOW_H

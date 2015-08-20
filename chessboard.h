@@ -16,13 +16,18 @@ public:
 
     void paintEvent(QPaintEvent *event);
     void mousePressEvent(QMouseEvent *event);
-    void loadPixmap(char chessman[], bool fliped);
+    void loadPixmap(const char *chessman);
+    void changeFlip();
 
 public slots:
+signals:
+    void doMove(int index);
 
 private:
     QPixmap background;
     QPixmap arrChessman[CHESSBOARD_ROW * CHESSBOARD_COLUMN];
+
+    bool fliped;
 };
 
 #endif // CHESSBOARD_H

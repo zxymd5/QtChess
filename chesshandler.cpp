@@ -1,5 +1,6 @@
 #include "chesshandler.h"
 #include "gamesettings.h"
+#include <assert.h>
 
 ChessHandler::ChessHandler(QObject *parent) : QObject(parent)
 {
@@ -21,7 +22,8 @@ void ChessHandler::newGame()
     reset();
     resetZobrist();
     currentMoveInfo.reset();
-
+    resetChessmanLayout();
+    emit refreshGame(EVENT_NEW_GAME);
 }
 
 void ChessHandler::reset()
@@ -53,20 +55,193 @@ void ChessHandler::resetZobrist()
 
 void ChessHandler::resetChessmanLayout()
 {
-
+    for (int i = 0; i < 256; ++i)
+    {
+        if(STARTUP_LAYOUT[i] != 0)
+        {
+            addChessman(i, STARTUP_LAYOUT[i]);
+        }
+    }
 }
 
 void ChessHandler::addChessman(int index, char chessmanType)
 {
     arrChessman[index] = chessmanType;
     currentZobrist.Xor(zobristTable[chessmanType - 1][index]);
-    if (chessmanType < 8)
+    if (isBlackSide(chessmanType))
     {
-        blackValue += cucvlPiecePos[chessmanType][index];
+        blackValue += CHESSMAN_VALUE[chessmanType - 1][index];
     }
     else
     {
-        redValue += cucvlPiecePos[chessmanType - 7][SQUARE_FLIP(index)];
+        redValue += CHESSMAN_VALUE[chessmanType - 8][SQUARE_FLIP(index)];
     }
+}
+
+void ChessHandler::delChessman(int index, char chessmanType)
+{
+    arrChessman[index] = 0;
+    currentZobrist.Xor(zobristTable[chessmanType - 1][index]);
+    if (isBlackSide(chessmanType))
+    {
+        blackValue -= CHESSMAN_VALUE[chessmanType - 1][index];
+    }
+    else
+    {
+        redValue -= CHESSMAN_VALUE[chessmanType - 8][SQUARE_FLIP(index)];
+    }
+}
+
+void ChessHandler::doMove(int index)
+{
+    assert(index >= 0x33 && index <= 0xcb);
+    int fromPos = SRC(currentMoveInfo.move);
+    int toPos = DST(currentMoveInfo.move);
+
+    if (fromPos == index || toPos == index)
+    {
+        return;
+    }
+
+    bool legal = false;
+    if (currentTurn == RED)
+    {
+        legal = redDoMove(index);
+    }
+    else
+    {
+        legal = blackDoMove(index);
+    }
+}
+
+bool ChessHandler::redDoMove(int index)
+{
+    int killedChessman = arrChessman[index];
+    int movingChessman = currentMoveInfo.movingChessman;
+    bool legal = false;
+    if (movingChessman == 0)
+    {
+        if (isRedSide(killedChessman))
+        {
+            currentMoveInfo.movingChessman = killedChessman;
+            currentMoveInfo.move = index;
+            legal = true;
+        }
+    }
+    else
+    {
+        if (isRedSide(killedChessman))
+        {
+            currentMoveInfo.movingChessman = killedChessman;
+            currentMoveInfo.move = index;
+            legal = true;
+        }
+        else
+        {
+            //判断走法是否合理
+            if(moveGenerator.validateMove(arrChessman, SRC(currentMoveInfo.move), index))
+            {
+                //再判断走棋后，自己是否被对方将军，如果自己被对方将军，则走法不合理
+                arrChessman[SRC(currentMoveInfo.move)] = 0;
+                arrChessman[index] = movingChessman;
+                if (moveGenerator.isAttackGeneral(arrChessman, RED_GENERAL))
+                {
+                    legal = false;
+                }
+                else
+                {
+                    //再判断自己是否将对方的军
+                    currentMoveInfo.attackGeneral = moveGenerator.isAttackGeneral(arrChessman, BLACK_GENERAL);
+                    legal = true;
+                }
+
+                arrChessman[SRC(currentMoveInfo.move)] = movingChessman;
+                arrChessman[index] = killedChessman;
+
+                if (legal)
+                {
+                    currentMoveInfo.killedChessman = killedChessman;
+                    currentMoveInfo.move = MOVE(SRC(currentMoveInfo.move), index);
+//                    m_clGenerator.GetChessManMoveStepAlpha(m_arrChessMan, m_stCurrentMoveRoute.stFromPos.nRow,
+//                        m_stCurrentMoveRoute.stFromPos.nColumn, nRow, nColumn,
+//                        m_stCurrentMoveRoute.szMoveStepAlpha);
+                }
+            }
+            else
+            {
+                legal = false;
+            }
+        }
+    }
+
+    return legal;
+}
+
+bool ChessHandler::blackDoMove(int index)
+{
+    int killedChessman = arrChessman[index];
+    int movingChessman = currentMoveInfo.movingChessman;
+    bool legal = false;
+    if (movingChessman == 0)
+    {
+        if (isBlackSide(killedChessman))
+        {
+            currentMoveInfo.movingChessman = killedChessman;
+            currentMoveInfo.move = index;
+            legal = true;
+        }
+    }
+    else
+    {
+        if (isBlackSide(killedChessman))
+        {
+            currentMoveInfo.movingChessman = killedChessman;
+            currentMoveInfo.move = index;
+            legal = true;
+        }
+        else
+        {
+            //判断走法是否合理
+            if(moveGenerator.validateMove(arrChessman, SRC(currentMoveInfo.move), index))
+            {
+                //再判断走棋后，自己是否被对方将军，如果自己被对方将军，则走法不合理
+                arrChessman[SRC(currentMoveInfo.move)] = 0;
+                arrChessman[index] = movingChessman;
+                if (moveGenerator.isAttackGeneral(arrChessman, BLACK_GENERAL))
+                {
+                    legal = false;
+                }
+                else
+                {
+                    //再判断自己是否将对方的军
+                    currentMoveInfo.attackGeneral = moveGenerator.isAttackGeneral(arrChessman, RED_GENERAL);
+                    legal = true;
+                }
+
+                arrChessman[SRC(currentMoveInfo.move)] = movingChessman;
+                arrChessman[index] = killedChessman;
+
+                if (legal)
+                {
+                    currentMoveInfo.killedChessman = killedChessman;
+                    currentMoveInfo.move = MOVE(SRC(currentMoveInfo.move), index);
+//                    m_clGenerator.GetChessManMoveStepAlpha(m_arrChessMan, m_stCurrentMoveRoute.stFromPos.nRow,
+//                        m_stCurrentMoveRoute.stFromPos.nColumn, nRow, nColumn,
+//                        m_stCurrentMoveRoute.szMoveStepAlpha);
+                }
+            }
+            else
+            {
+                legal = false;
+            }
+        }
+    }
+
+    return legal;
+}
+
+const char *ChessHandler::getChessman()
+{
+    return arrChessman;
 }
 

@@ -7,7 +7,8 @@ ChessBoard::ChessBoard(QWidget *parent) : QWidget(parent)
 {
     resize(CHESSBOARD_WIDTH, CHESSBOARD_HEIGHT);
     move(CHESSBOARD_STARTX, CHESSBOARD_STARTY);
-    loadPixmap((char *)cucpcStartup, false);
+    fliped = false;
+    loadPixmap(STARTUP_LAYOUT);
 }
 
 ChessBoard::~ChessBoard()
@@ -43,19 +44,19 @@ void ChessBoard::mousePressEvent(QMouseEvent *event)
         int column = 0;
         getPixmapIndex(event->pos().x(), event->pos().y(), row, column);
 
-        int sq = getChessmanIndex(row, column, false);
+        int sq = getChessmanIndex(row, column, fliped);
+        emit doMove(sq);
+//        int pc = STARTUP_LAYOUT[sq];
+//        if(pc != 0)
+//        {
+//            arrChessman[row * CHESSBOARD_COLUMN + column].load(getChessmanPic(pc, true, false));
+//        }
 
-        int pc = cucpcStartup[sq];
-        if(pc != 0)
-        {
-            arrChessman[row * CHESSBOARD_COLUMN + column].load(getChessmanPic(pc, true, false));
-        }
-
-        update();
+//        update();
     }
 }
 
-void ChessBoard::loadPixmap(char chessman[], bool fliped)
+void ChessBoard::loadPixmap(const char *chessman)
 {
     int sq = 0;
     char pc = 0;
@@ -81,4 +82,9 @@ void ChessBoard::loadPixmap(char chessman[], bool fliped)
         }
     }
 
+}
+
+void ChessBoard::changeFlip()
+{
+    fliped = !fliped;
 }
