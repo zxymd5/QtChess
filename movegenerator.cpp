@@ -155,9 +155,306 @@ bool MoveGenerator::validateSoldierMove(const char *arrChessman, int srcPos, int
     int side = isBlackSide(arrChessman[srcPos]) ? 1 : 0;
     if (AWAY_HALF(dstPos, side) && (dstPos == srcPos - 1 || dstPos == srcPos + 1))
     {
-      return true;
+        return true;
     }
     return dstPos == SQUARE_FORWARD(srcPos, side);
+}
+
+void MoveGenerator::getMoveStepAlpha(const char *arrChessman, int mv, QString &stepAlpha)
+{
+    int fromPos = SRC(mv);
+    char movingChessman = arrChessman[fromPos];
+    stepAlpha.append(CHESSMAN_CODE[movingChessman - 1]);
+
+    int fromX = FILE_X(fromPos);
+    int fromY = RANK_Y(fromPos);
+
+    int dstPos = DST(mv);
+    int toX = FILE_X(dstPos);
+    int toY = RANK_Y(dstPos);
+
+    switch (movingChessman)
+    {
+    case BLACK_GENERAL:
+    case RED_GENERAL:
+        getGeneralMoveStepAlpha(arrChessman, movingChessman, fromX, fromY, toX, toY, stepAlpha);
+        break;
+    case BLACK_ADVISOR:
+    case BLACK_MINISTER:
+    case RED_ADVISOR:
+    case RED_MINISTER:
+        getAdvisorMinisterMoveStepAlpha(arrChessman, movingChessman, fromX, fromY, toX, toY, stepAlpha);
+        break;
+    case BLACK_CHARIOT:
+    case BLACK_CANNON:
+    case RED_CHARIOT:
+    case RED_CANNON:
+        getChariotCannonMoveStepAlpha(arrChessman, movingChessman, fromX, fromY, toX, toY, stepAlpha);
+        break;
+    case BLACK_HORSE:
+    case RED_HORSE:
+        getHorseMoveStepAlpha(arrChessman, movingChessman, fromX, fromY, toX, toY, stepAlpha);
+        break;
+    case BLACK_SOLDIER:
+    case RED_SOLDIER:
+        getSoldierMoveStepAlpha(arrChessman, movingChessman, fromX, fromY, toX, toY, stepAlpha);
+        break;
+    default:
+        break;
+    }
+}
+
+void MoveGenerator::getGeneralMoveStepAlpha(const char *arrChessman, char movingChessman, int fromX, int fromY, int toX, int toY, QString &stepAlpha)
+{
+    bool black = isBlackSide(movingChessman);
+    int edge = black ? FILE_LEFT : FILE_RIGHT;
+    stepAlpha += (abs(edge - fromX) + 1 + '0');
+    if (fromY == toY)
+    {
+        stepAlpha += '.';
+        stepAlpha += (abs(edge - toX) + 1 + '0');
+    }
+    else
+    {
+        stepAlpha += toY > fromY ? (black ? '+' : '-') : (black ? '-' : '+');
+        stepAlpha += (abs(fromY - toY) + '0');
+    }
+}
+
+void MoveGenerator::getAdvisorMinisterMoveStepAlpha(const char *arrChessman, char movingChessman, int fromX, int fromY, int toX, int toY, QString &stepAlpha)
+{
+    bool black = isBlackSide(movingChessman);
+    int edge = black ? FILE_LEFT : FILE_RIGHT;
+    stepAlpha += (abs(edge - fromX) + 1 + '0');
+    stepAlpha += toY > fromY ? (black ? '+' : '-') : (black ? '-' : '+');
+    stepAlpha += (abs(edge - toX) + 1 + '0');
+}
+
+void MoveGenerator::getChariotCannonMoveStepAlpha(const char *arrChessman, char movingChessman, int fromX, int fromY, int toX, int toY, QString &stepAlpha)
+{
+    //获取车/炮的位置，如果有两个车/炮在同一列上要分前后
+    bool black = isBlackSide(movingChessman);
+    int edge = black ? FILE_LEFT : FILE_RIGHT;
+
+    int pos[5];
+    int chessmanCount = getChessmanPos(arrChessman, movingChessman, pos);
+    //如果两个车/炮在同一列上
+    if (chessmanCount == 2 && FILE_X(pos[0]) == FILE_X(pos[1]))
+    {
+        if (RANK_Y(pos[0]) > RANK_Y(pos[1]))
+        {
+            if (fromY == RANK_Y(pos[0]))
+            {
+                stepAlpha +=  black ? 'a' : 'b';
+            }
+            else
+            {
+                stepAlpha +=  black ? 'b' : 'a';
+            }
+        }
+        else
+        {
+            if (fromY == RANK_Y(pos[0]))
+            {
+                stepAlpha +=  black ? 'b' : 'a';
+            }
+            else
+            {
+                stepAlpha +=  black ? 'a' : 'b';
+            }
+        }
+    }
+    else
+    {
+        stepAlpha += (abs(edge - fromX) + 1 + '0');
+    }
+
+    if (fromY == toY)
+    {
+        stepAlpha += '.';
+        stepAlpha += (abs(edge - toX) + 1 + '0');
+    }
+    else
+    {
+        stepAlpha += toY > fromY ? (black ? '+' : '-') : (black ? '-' : '+');
+        stepAlpha += (abs(fromY - toY) + '0');
+    }
+}
+
+void MoveGenerator::getHorseMoveStepAlpha(const char *arrChessman, char movingChessman, int fromX, int fromY, int toX, int toY, QString &stepAlpha)
+{
+    bool black = isBlackSide(movingChessman);
+    int edge = black ? FILE_LEFT : FILE_RIGHT;
+
+    int pos[5];
+    int chessmanCount = getChessmanPos(arrChessman, movingChessman, pos);
+
+    //获取马的位置，如果有两个马在同一列上要分前后
+    //如果两个马在同一列上
+    if (chessmanCount == 2 && FILE_X(pos[0]) == FILE_X(pos[1]))
+    {
+        if (RANK_Y(pos[0]) > RANK_Y(pos[1]))
+        {
+            if (fromY == RANK_Y(pos[0]))
+            {
+                stepAlpha +=  black ? 'a' : 'b';
+            }
+            else
+            {
+                stepAlpha +=  black ? 'b' : 'a';
+            }
+        }
+        else
+        {
+            if (fromY == RANK_Y(pos[0]))
+            {
+                stepAlpha +=  black ? 'b' : 'a';
+            }
+            else
+            {
+                stepAlpha +=  black ? 'a' : 'b';
+            }
+        }
+    }
+    else
+    {
+        stepAlpha += (abs(edge - fromX) + 1 + '0');
+    }
+
+    stepAlpha += toY > fromY ? (black ? '+' : '-') : (black ? '-' : '+');
+    stepAlpha += (abs(edge - toX) + 1 + '0');
+}
+
+void MoveGenerator::getSoldierMoveStepAlpha(const char *arrChessman, char movingChessman, int fromX, int fromY, int toX, int toY, QString &stepAlpha)
+{
+    bool black = isBlackSide(movingChessman);
+    int edge = black ? FILE_LEFT : FILE_RIGHT;
+
+    //获取兵的位置
+    int pos[5];
+    int chessmanCount = getChessmanPos(arrChessman, movingChessman, pos);
+
+    stepAlpha += (abs(edge - fromX) + 1 + '0');
+
+    int mark = 0;
+    for (int i = 0; i < chessmanCount; i++)
+    {
+        if (FILE_X(pos[i]) == fromX)
+        {
+            mark++;
+        }
+    }
+
+    if (mark > 1)
+    {
+        int soldierCountOnEachColumn[16] = {0};                                                  //九条纵线上，每条线上兵的个数
+        int columnForEachSoldier[5] = {-1, -1, -1, -1, -1};                                                       //5个兵各在哪些纵线上
+        int n = 0;
+        int start = 0;
+
+        for (int i = 0; i < chessmanCount; i++)
+        {
+            soldierCountOnEachColumn[FILE_X(pos[i])]++;
+        }
+
+        if(black)
+        {
+            for (int i = 0; i < 16; i++)
+            {
+                if (soldierCountOnEachColumn[i] > 1)
+                {
+                    //此纵线有两个以上的兵
+                    for (int j = 0; j < chessmanCount; j++)
+                    {
+                        if (i == FILE_X(pos[j]))
+                        {
+                            columnForEachSoldier[n] = j;
+                            n++;
+                        }
+                    }
+
+                    //为纵线上的棋子排序
+                    for (int k = start; k < n - 1; k++)
+                    {
+                        for (int j = n - 2; j >= k; j--)
+                        {
+                            if (RANK_Y(pos[columnForEachSoldier[j]]) < RANK_Y(pos[columnForEachSoldier[j + 1]]))
+                            {
+                                int tmp = columnForEachSoldier[j];
+                                columnForEachSoldier[j] = columnForEachSoldier[j + 1];
+                                columnForEachSoldier[j + 1] = tmp;
+                            }
+                        }
+                    }
+                    start = n;
+                }
+            }
+        }
+        else
+        {
+            for (int i = 15; i >= 0; i--)
+            {
+                if (soldierCountOnEachColumn[i] > 1)
+                {
+                    //此纵线有两个以上的兵
+                    for (int j = 0; j < chessmanCount; j++)
+                    {
+                        if (i == FILE_X(pos[j]))
+                        {
+                            columnForEachSoldier[n] = j;
+                            n++;
+                        }
+                    }
+
+                    //为纵线上的棋子排序
+                    for (int k = start; k < n - 1; k++)
+                    {
+                        for (int j = n - 2; j >= k; j--)
+                        {
+                            if (RANK_Y(pos[columnForEachSoldier[j]]) > RANK_Y(pos[columnForEachSoldier[j + 1]]))
+                            {
+                                int tmp = columnForEachSoldier[j];
+                                columnForEachSoldier[j] = columnForEachSoldier[j + 1];
+                                columnForEachSoldier[j + 1] = tmp;
+                            }
+                        }
+                    }
+                    start = n;
+                }
+            }
+        }
+
+        char order = 'c'; //前
+        for (int i = 0; i < chessmanCount; i++)
+        {
+            if (RANK_Y(pos[columnForEachSoldier[i]]) == toY)
+            {
+                stepAlpha[1] = order;
+            }
+            order++;
+        }
+
+        //转换成前后或前中后
+        if (start == 2)
+        {
+            stepAlpha[1] = stepAlpha[1] == 'c' ? 'q' : 'h';
+        }
+        else if (start == 3)
+        {
+            stepAlpha[1] = stepAlpha[1] == 'c' ? 'q' : (stepAlpha[1] == 'd' ? 'z' : 'h');
+        }
+    }
+
+    if (fromY == toY)
+    {
+        stepAlpha += '.';
+        stepAlpha += abs(edge - toX) + 1 + '0';
+    }
+    else
+    {
+        stepAlpha += fromY > toY ? (black ? '-' : '+') : (black ? '+' : '-');
+        stepAlpha += abs(fromX - toX) + '0';
+    }
 }
 
 bool MoveGenerator::isAttackGeneral(const char *arrChessman, char attackedGeneral)
@@ -169,10 +466,10 @@ bool MoveGenerator::isAttackGeneral(const char *arrChessman, char attackedGenera
     if (attackedGeneral == BLACK_GENERAL)
     {
         attacked = attackedByGeneral(arrChessman, pos[0], RED_GENERAL) ||
-                   attackGeneral(arrChessman, pos[0], RED_CHARIOT) ||
-                   attackGeneral(arrChessman, pos[0], RED_CANNON) ||
-                   attackGeneral(arrChessman, pos[0], RED_HORSE) ||
-                   attackGeneral(arrChessman, pos[0], RED_SOLDIER);
+                attackGeneral(arrChessman, pos[0], RED_CHARIOT) ||
+                attackGeneral(arrChessman, pos[0], RED_CANNON) ||
+                attackGeneral(arrChessman, pos[0], RED_HORSE) ||
+                attackGeneral(arrChessman, pos[0], RED_SOLDIER);
     }
     else
     {
@@ -245,6 +542,70 @@ int MoveGenerator::getChessmanPos(const char *arrChessman, char chessman, int po
     }
 
     return posCount;
+}
+
+bool MoveGenerator::isGeneralDead(char *arrChessman, int side)
+{
+    bool dead = true;
+    char general = side == BLACK ? BLACK_GENERAL : RED_GENERAL;
+
+    //判断能否解除将军的局面
+    for (int i = RANK_TOP; i <= RANK_BOTTOM; i++)
+    {
+        for (int j = FILE_LEFT; j <= FILE_RIGHT; j++)
+        {
+            int index = COORD_XY(j, i);
+            if ((side == BLACK && isBlackSide(arrChessman[index]))
+                || (side == RED && isRedSide(arrChessman[index])))
+            {
+                if(canSaveGeneral(arrChessman, index, general))
+                {
+                    dead = false;
+                    break;
+                }
+            }
+        }
+    }
+
+    return dead;
+}
+
+bool MoveGenerator::canSaveGeneral(char *arrChessman, int index, char attackedGeneral)
+{
+    bool saved = false;
+    char killedChessman = 0;
+    char movingChessman = arrChessman[index];
+
+    for (int i = RANK_TOP; i <= RANK_BOTTOM; i++)
+    {
+        for (int j = FILE_LEFT; j <= FILE_RIGHT; j++)
+        {
+            int dstPos = COORD_XY(j, i);
+            if (validateMove(arrChessman, index, dstPos))
+            {
+                killedChessman = arrChessman[dstPos];
+
+                //再判断走棋后，自己是否被对方将军
+                arrChessman[index] = 0;
+                arrChessman[dstPos] = movingChessman;
+
+                if (!isAttackGeneral(arrChessman, attackedGeneral))
+                {
+                    saved = true;
+                }
+
+                arrChessman[index] = movingChessman;
+                arrChessman[dstPos] = killedChessman;
+
+                if (saved)
+                {
+                    break;
+                }
+            }
+        }
+    }
+
+    return saved;
 }
 
 QString MoveGenerator::digitToChinese(const QChar &digit, bool black)
@@ -464,16 +825,16 @@ void MoveGenerator::alphaFmtToChiness(const QString &alphaFmt, QString &chineseF
     if (alphaFmt[1] >= 'a')
     {
         chineseFmt = digitToChinese(alphaFmt[1], black) +
-                 chessManCodeToChinese(alphaFmt[0]) +
-                 actionToChinese(alphaFmt[2]) +
-                 digitToChinese(alphaFmt[3], black);
+                chessManCodeToChinese(alphaFmt[0]) +
+                actionToChinese(alphaFmt[2]) +
+                digitToChinese(alphaFmt[3], black);
     }
     else
     {
         chineseFmt = chessManCodeToChinese(alphaFmt[0]) +
-                 digitToChinese(alphaFmt[1], black) +
-                 actionToChinese(alphaFmt[2]) +
-                 digitToChinese(alphaFmt[3], black);
+                digitToChinese(alphaFmt[1], black) +
+                actionToChinese(alphaFmt[2]) +
+                digitToChinese(alphaFmt[3], black);
     }
 }
 

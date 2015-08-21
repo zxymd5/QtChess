@@ -112,6 +112,20 @@ void ChessHandler::doMove(int index)
     {
         legal = blackDoMove(index);
     }
+
+    if (legal)
+    {
+        if (SRC(currentMoveInfo.move) > 0 && DST(currentMoveInfo.move) > 0)
+        {
+
+        }
+        else
+        {
+        }
+    }
+    else
+    {
+    }
 }
 
 bool ChessHandler::redDoMove(int index)
@@ -162,9 +176,7 @@ bool ChessHandler::redDoMove(int index)
                 {
                     currentMoveInfo.killedChessman = killedChessman;
                     currentMoveInfo.move = MOVE(SRC(currentMoveInfo.move), index);
-//                    m_clGenerator.GetChessManMoveStepAlpha(m_arrChessMan, m_stCurrentMoveRoute.stFromPos.nRow,
-//                        m_stCurrentMoveRoute.stFromPos.nColumn, nRow, nColumn,
-//                        m_stCurrentMoveRoute.szMoveStepAlpha);
+                    moveGenerator.getMoveStepAlpha(arrChessman, currentMoveInfo.move, currentMoveInfo.moveStepAlpha);
                 }
             }
             else
@@ -225,9 +237,7 @@ bool ChessHandler::blackDoMove(int index)
                 {
                     currentMoveInfo.killedChessman = killedChessman;
                     currentMoveInfo.move = MOVE(SRC(currentMoveInfo.move), index);
-//                    m_clGenerator.GetChessManMoveStepAlpha(m_arrChessMan, m_stCurrentMoveRoute.stFromPos.nRow,
-//                        m_stCurrentMoveRoute.stFromPos.nColumn, nRow, nColumn,
-//                        m_stCurrentMoveRoute.szMoveStepAlpha);
+                    moveGenerator.getMoveStepAlpha(arrChessman, currentMoveInfo.move, currentMoveInfo.moveStepAlpha);
                 }
             }
             else
@@ -238,6 +248,38 @@ bool ChessHandler::blackDoMove(int index)
     }
 
     return legal;
+}
+
+void ChessHandler::applyMove()
+{
+    doMakeMove(currentMoveInfo);
+
+}
+
+void ChessHandler::doMakeMove(MoveInfo &info, bool record)
+{
+    int fromPos = SRC(info.move);
+    int toPos = DST(info.move);
+    char movingChessman = arrChessman[fromPos];
+    char killedChessman = arrChessman[toPos];
+
+    if (killedChessman > 0)
+    {
+        delChessman(toPos, killedChessman);
+    }
+
+    delChessman(fromPos, movingChessman);
+    addChessman(toPos, movingChessman);
+    info.zobristKey = currentZobrist.key;
+
+    if (record)
+    {
+        lstMoveInfo.push_back(info);
+        currentTurn = currentTurn == BLACK ? RED : BLACK;
+    }
+    currentSearchMoveTurn = currentSearchMoveTurn == BLACK ? RED : BLACK;
+
+    currentZobrist.Xor(initZobrist);
 }
 
 const char *ChessHandler::getChessman()

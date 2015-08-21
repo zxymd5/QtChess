@@ -24,6 +24,8 @@ public:
     void doMove(int index);
     bool redDoMove(int index);
     bool blackDoMove(int index);
+    void applyMove();
+    void doMakeMove(MoveInfo &info, bool record = true);
 
     const char *getChessman();
 

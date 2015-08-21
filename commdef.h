@@ -40,6 +40,8 @@ static const QString AUDIO_TIE = QObject::tr(":/audios/Draw.wav");
 static const QString AUDIO_ILLEGAL = QObject::tr(":/audios/Forbid.wav");
 
 static const QString SETTINGS_FILE = QObject::tr("Config.ini");
+static const QString CHESSMAN_CODE = QObject::tr("krncabpKRNCABP"); //将车马炮士象卒帅车马炮仕相兵
+
 static const int TIE = 0;
 static const int BLACK = 1;
 static const int RED = 2;
