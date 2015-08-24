@@ -26,6 +26,8 @@ public:
     bool blackDoMove(int index);
     void applyMove();
     void doMakeMove(MoveInfo &info, bool record = true);
+    int repStatus(int recur);
+    int repValue(int repStatus);
 
     const char *getChessman();
 

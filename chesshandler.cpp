@@ -117,14 +117,21 @@ void ChessHandler::doMove(int index)
     {
         if (SRC(currentMoveInfo.move) > 0 && DST(currentMoveInfo.move) > 0)
         {
+            applyMove();
 
+            //电脑走棋
         }
         else
         {
+            emit refreshGame(EVENT_UPDATE_MOVE);
+
+            //发送网络消息
+
         }
     }
     else
     {
+        emit refreshGame(EVENT_ILLEGAL_MOVE);
     }
 }
 
@@ -254,6 +261,35 @@ void ChessHandler::applyMove()
 {
     doMakeMove(currentMoveInfo);
 
+    //判断是否将对方置于死地
+    if (currentMoveInfo.attackGeneral)
+    {
+        if (moveGenerator.isGeneralDead(arrChessman, currentTurn))
+        {
+            whoIsDead = currentTurn;
+            gameResult = currentTurn == BLACK ? RED : BLACK;
+        }
+    }
+
+    int rep = repStatus(3);
+    if (rep > 0)
+    {
+        int repVal = repValue(rep);
+        if (repVal > WIN_VALUE)
+        {
+            gameResult = currentTurn == BLACK ? RED : BLACK;
+        }
+
+        if (repVal < -WIN_VALUE)
+        {
+            gameResult = currentTurn;
+        }
+    }
+
+    //发送网络消息
+
+    emit refreshGame(EVENT_UPDATE_MOVE);
+    currentMoveInfo.reset();
 }
 
 void ChessHandler::doMakeMove(MoveInfo &info, bool record)
@@ -280,6 +316,49 @@ void ChessHandler::doMakeMove(MoveInfo &info, bool record)
     currentSearchMoveTurn = currentSearchMoveTurn == BLACK ? RED : BLACK;
 
     currentZobrist.Xor(initZobrist);
+}
+
+int ChessHandler::repStatus(int recur)
+{
+    bool selfSide = true;
+    bool perpCheck = true;
+    bool oppPerpCheck = true;
+
+    int i = lstMoveInfo.size() - 1;
+
+    while(i >= 0 && lstMoveInfo.at(i).killedChessman == 0)
+    {
+        if (selfSide)
+        {
+            perpCheck = perpCheck && lstMoveInfo.at(i).attackGeneral;
+            if (lstMoveInfo.at(i).zobristKey == currentMoveInfo.zobristKey)
+            {
+                recur--;
+                if (recur == 0)
+                {
+                    return 1 + (perpCheck ? 2 : 0) + (oppPerpCheck ? 4 : 0);
+                }
+            }
+        }
+        else
+        {
+            oppPerpCheck = oppPerpCheck && lstMoveInfo.at(i).attackGeneral;
+        }
+        selfSide = !selfSide;
+        --i;
+    }
+
+    return 0;
+}
+
+int ChessHandler::repValue(int repStatus)
+{
+
+    int retVal = 0;
+    retVal = ((repStatus & 2) == 0 ? 0 :  - BAN_VALUE) +
+        ((repStatus & 4) == 0 ? 0 : BAN_VALUE);
+
+    return retVal == 0 ? ((lstMoveInfo.size() & 1) == 0 ? -DRAW_VALUE : DRAW_VALUE) : retVal;
 }
 
 const char *ChessHandler::getChessman()

@@ -94,6 +94,8 @@ static const char RED_MINISTER = 13;     //红相
 static const char RED_SOLDIER = 14;      //红兵
 
 static const int EVENT_NEW_GAME = 1;
+static const int EVENT_UPDATE_MOVE = 2;
+static const int EVENT_ILLEGAL_MOVE = 3;
 
 // 判断棋子是否在棋盘中的数组
 static const char ccInBoard[256] = {
@@ -237,6 +239,13 @@ static const char STARTUP_LAYOUT[256] = {
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
 };
+
+const int MATE_VALUE = 10000;               //最高分值，即将死的分值
+const int BAN_VALUE = MATE_VALUE - 100;     //长将判负的分值，低于该值将不写入置换表
+const int WIN_VALUE = MATE_VALUE - 200;     //搜索出胜负的分值界限，超出此值就说明已经搜索出杀棋了
+const int DRAW_VALUE = 20;                  //和棋时返回的分数（取负值）
+const int ADVANCED_VALUE = 3;               //先行权分值
+const int RANDOM_MASK = 7;                  //随机性分值
 
 // 子力位置价值表
 static const int CHESSMAN_VALUE[7][256] = {
