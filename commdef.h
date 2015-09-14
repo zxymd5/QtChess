@@ -371,11 +371,6 @@ static const int CHESSMAN_VALUE[7][256] = {
     }
 };
 
-static int getChessboardCoord(int x, int y)
-{
-    return (x - FILE_LEFT) + (y - RANK_TOP) * CHESSBOARD_COLUMN;
-}
-
 // 根据纵坐标和横坐标获得格子
 static int COORD_XY(int x, int y) {
     return x + (y << 4);
@@ -389,6 +384,14 @@ static int FILE_FLIP(int x) {
 // 横坐标垂直镜像
 static int RANK_FLIP(int y) {
     return 15 - y;
+}
+
+static int getChessboardCoord(int x, int y, bool fliped)
+{
+    x = fliped ? FILE_FLIP(x) : x;
+    y = fliped ? RANK_FLIP(y) : y;
+
+    return (x - FILE_LEFT) + (y - RANK_TOP) * CHESSBOARD_COLUMN;
 }
 
 //获取棋子位置
@@ -538,6 +541,11 @@ static QString getChessmanPic(char chessman, bool selected, bool dead)
     QString chessmanPic;
     switch(chessman)
     {
+    case 0:
+        {
+            chessmanPic = selected ? QObject::tr(":/images/WOOD/OOS.GIF"): QObject::tr(":/images/WOOD/OO.GIF");
+        }
+        break;
     case 1:
         {
             chessmanPic = dead ? QObject::tr(":/images/WOOD/BKM.GIF") : (selected ? QObject::tr(":/images/WOOD/BKS.GIF"): QObject::tr(":/images/WOOD/BK.GIF"));

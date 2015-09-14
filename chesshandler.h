@@ -29,6 +29,10 @@ public:
     int repStatus(int recur);
     int repValue(int repStatus);
 
+    const MoveInfo &getCurrentMoveInfo();
+    const QList<MoveInfo> &getLstMoveInfo();
+    int getGameResult();
+
     const char *getChessman();
 
 signals:

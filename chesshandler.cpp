@@ -243,7 +243,8 @@ bool ChessHandler::blackDoMove(int index)
                 if (legal)
                 {
                     currentMoveInfo.killedChessman = killedChessman;
-                    currentMoveInfo.move = MOVE(SRC(currentMoveInfo.move), index);
+                    int src = SRC(currentMoveInfo.move);
+                    currentMoveInfo.move = MOVE(src, index);
                     moveGenerator.getMoveStepAlpha(arrChessman, currentMoveInfo.move, currentMoveInfo.moveStepAlpha);
                 }
             }
@@ -359,6 +360,21 @@ int ChessHandler::repValue(int repStatus)
         ((repStatus & 4) == 0 ? 0 : BAN_VALUE);
 
     return retVal == 0 ? ((lstMoveInfo.size() & 1) == 0 ? -DRAW_VALUE : DRAW_VALUE) : retVal;
+}
+
+const MoveInfo &ChessHandler::getCurrentMoveInfo()
+{
+    return currentMoveInfo;
+}
+
+const QList<MoveInfo> &ChessHandler::getLstMoveInfo()
+{
+    return lstMoveInfo;
+}
+
+int ChessHandler::getGameResult()
+{
+    return gameResult;
 }
 
 const char *ChessHandler::getChessman()

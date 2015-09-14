@@ -19,6 +19,7 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     void initActions();
     void processNewGameEvent();
+    void processUpdateMoveEvent();
 
     ~MainWindow();
 

@@ -27,7 +27,7 @@ void MainWindow::initActions()
     connect(ui->actionNewGame, SIGNAL(triggered()), this, SLOT(newGame()));
     connect(ui->actionFlip, SIGNAL(triggered()), this, SLOT(flipChessBoard()));
     connect(chessBoard, SIGNAL(doMove(int)), this, SLOT(doMove(int)));
-    connect(chessHandler, SIGNAL(processEvent(int)), this, SLOT(processEvent(int)));
+    connect(chessHandler, SIGNAL(refreshGame(int)), this, SLOT(processEvent(int)));
 }
 
 MainWindow::~MainWindow()
@@ -85,6 +85,9 @@ void MainWindow::processEvent(int event)
     case EVENT_NEW_GAME:
         processNewGameEvent();
         break;
+    case EVENT_UPDATE_MOVE:
+        processUpdateMoveEvent();
+        break;
     default:
         break;
     }
@@ -96,5 +99,19 @@ void MainWindow::processNewGameEvent()
     chessBoard->update();
     gameOver = false;
     gameStarted = true;
+}
+
+void MainWindow::processUpdateMoveEvent()
+{
+    MoveInfo info = chessHandler->getCurrentMoveInfo();
+    int gameResult = chessHandler->getGameResult();
+    //const char *chessman = chessHandler->getChessman();
+
+    //如果移动了完整的一步，则需要先更新整个棋盘
+    if (SRC(info.move) > 0 && DST(info.move) > 0)
+    {
+        chessBoard->loadPixmap(chessHandler->getChessman());
+    }
+    chessBoard->selectChessman(chessHandler->getChessman(), info.move);
 }
 
