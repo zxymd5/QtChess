@@ -70,44 +70,32 @@ void ChessBoard::loadPixmap(const char *chessman)
             index = row * CHESSBOARD_COLUMN + column;
             sq = getChessmanIndex(row, column, fliped);
             pc = chessman[sq];
-//            if (pc != 0)
-//            {
-                arrChessman[index].load(getChessmanPic(pc, false, false));
-//            }
-//            else
-//            {
-//                arrChessman[index].fill(Qt::transparent);
-//            }
+            arrChessman[index].load(getChessmanPic(pc, false, false));
 
         }
     }
 
 }
 
-void ChessBoard::selectChessman(const char *chessman, int move)
+void ChessBoard::showMoveRoute(char movingChessman, int move, bool show)
 {
     int srcPos = SRC(move);
     int dstPos = DST(move);
+    int srcIndex = 0;
+    int dstIndex = 0;
 
     if (srcPos > 0)
     {
-//        int srcChessman = chessman[srcPos];
-//        if (srcChessman > 0)
-//        {
-           int index = getChessboardCoord(FILE_X(srcPos), RANK_Y(srcPos), fliped);
-            arrChessman[index].load(getChessmanPic(chessman[srcPos], true, false));
-//        }
-//        else
-//        {
-//            arrChessman[srcPos].load(QObject::tr(":/images/WOOD/OOS.GIF"));
-//        }
+        srcIndex = getChessboardCoord(FILE_X(srcPos), RANK_Y(srcPos), fliped);
+        arrChessman[srcIndex].load(getChessmanPic(dstPos > 0 ? 0 : movingChessman, show, false));
     }
 
     if (dstPos > 0)
     {
-        int index = getChessboardCoord(FILE_X(dstPos), RANK_Y(dstPos), fliped);
-        arrChessman[index].load(getChessmanPic(chessman[dstPos], true, false));
+        dstIndex = getChessboardCoord(FILE_X(dstPos), RANK_Y(dstPos), fliped);
+        arrChessman[dstIndex].load(getChessmanPic(movingChessman, show, false));
     }
+
 }
 
 void ChessBoard::changeFlip()

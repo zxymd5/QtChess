@@ -517,7 +517,7 @@ static int DST(int mv) {
 
 // 根据起点和终点获得走法
 static int MOVE(int sqSrc, int sqDst) {
-  return sqSrc + sqDst << 8;
+  return sqSrc + (sqDst << 8);
 }
 
 static bool isBlackSide(char chessmanType)

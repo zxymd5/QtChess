@@ -243,8 +243,7 @@ bool ChessHandler::blackDoMove(int index)
                 if (legal)
                 {
                     currentMoveInfo.killedChessman = killedChessman;
-                    int src = SRC(currentMoveInfo.move);
-                    currentMoveInfo.move = MOVE(src, index);
+                    currentMoveInfo.move = MOVE(SRC(currentMoveInfo.move), index);
                     moveGenerator.getMoveStepAlpha(arrChessman, currentMoveInfo.move, currentMoveInfo.moveStepAlpha);
                 }
             }

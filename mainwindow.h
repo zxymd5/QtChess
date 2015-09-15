@@ -6,6 +6,7 @@
 #include "steplist.h"
 #include "chesshandler.h"
 #include "settingsdialog.h"
+#include "gamesettings.h"
 
 namespace Ui {
 class MainWindow;
@@ -20,6 +21,8 @@ public:
     void initActions();
     void processNewGameEvent();
     void processUpdateMoveEvent();
+    void playTipSound(const MoveInfo &info, int gameResult);
+    void playGameResultSound(int gameResult);
 
     ~MainWindow();
 

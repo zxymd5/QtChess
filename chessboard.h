@@ -17,7 +17,7 @@ public:
     void paintEvent(QPaintEvent *event);
     void mousePressEvent(QMouseEvent *event);
     void loadPixmap(const char *chessman);
-    void selectChessman(const char *chessman, int move);
+    void showMoveRoute(char movingChessman, int move, bool show);
     void changeFlip();
 
 public slots:

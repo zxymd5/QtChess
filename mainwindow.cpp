@@ -112,6 +112,46 @@ void MainWindow::processUpdateMoveEvent()
     {
         chessBoard->loadPixmap(chessHandler->getChessman());
     }
-    chessBoard->selectChessman(chessHandler->getChessman(), info.move);
+    chessBoard->showMoveRoute(info.movingChessman, info.move, true);
+    chessBoard->update();
+    playTipSound(info, gameResult);
+}
+
+void MainWindow::playTipSound(const MoveInfo &info, int gameResult)
+{
+    if (gameResult != -1)
+    {
+        playGameResultSound(gameResult);
+    }
+    else
+    {
+        if (SRC(info.move) > 0 && DST(info.move) > 0)
+        {
+            if (info.attackGeneral)
+            {
+                QSound::play(AUDIO_ATTACK_KING);
+            }
+            else
+            {
+                QSound::play(info.killedChessman == 0 ? AUDIO_MOVE : AUDIO_EAT);
+            }
+        }
+        else
+        {
+            QSound::play(AUDIO_CHOOSE);
+        }
+    }
+}
+
+void MainWindow::playGameResultSound(int gameResult)
+{
+    if (gameResult != TIE)
+    {
+        QSound::play(gameResult == g_gameSettings.getCompetitorSide() ? AUDIO_LOSS : AUDIO_WIN);
+    }
+    else
+    {
+        QSound::play(AUDIO_TIE);
+    }
 }
 
