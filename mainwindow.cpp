@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include "commdef.h"
 #include <QSound>
+#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -26,6 +27,8 @@ void MainWindow::initActions()
     connect(ui->actionStart, SIGNAL(triggered()), this, SLOT(startGame()));
     connect(ui->actionNewGame, SIGNAL(triggered()), this, SLOT(newGame()));
     connect(ui->actionFlip, SIGNAL(triggered()), this, SLOT(flipChessBoard()));
+    connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(save()));
+    connect(ui->actionOpen, SIGNAL(triggered()), this, SLOT(open()));
     connect(chessBoard, SIGNAL(doMove(int)), this, SLOT(doMove(int)));
     connect(chessHandler, SIGNAL(refreshGame(int)), this, SLOT(processEvent(int)));
 }
@@ -73,6 +76,18 @@ void MainWindow::flipChessBoard()
     chessBoard->update();
 }
 
+//保存棋局为FEN串
+void MainWindow::save()
+{
+
+}
+
+//从FEE串加载棋局
+void MainWindow::open()
+{
+
+}
+
 void MainWindow::doMove(int index)
 {
     chessHandler->doMove(index);
@@ -88,6 +103,9 @@ void MainWindow::processEvent(int event)
     case EVENT_UPDATE_MOVE:
         processUpdateMoveEvent();
         break;
+    case EVENT_ILLEGAL_MOVE:
+        processIllegalMoveEvent();
+        break;
     default:
         break;
     }
@@ -97,6 +115,8 @@ void MainWindow::processNewGameEvent()
 {
     chessBoard->loadPixmap(chessHandler->getChessman());
     chessBoard->update();
+    leftStepList->clearHistoryDisplay();
+    rightStepList->clearHistoryDisplay();
     gameOver = false;
     gameStarted = true;
 }
@@ -105,16 +125,33 @@ void MainWindow::processUpdateMoveEvent()
 {
     MoveInfo info = chessHandler->getCurrentMoveInfo();
     int gameResult = chessHandler->getGameResult();
-    //const char *chessman = chessHandler->getChessman();
 
     //如果移动了完整的一步，则需要先更新整个棋盘
     if (SRC(info.move) > 0 && DST(info.move) > 0)
     {
         chessBoard->loadPixmap(chessHandler->getChessman());
+        addToStepList(info);
     }
     chessBoard->showMoveRoute(info.movingChessman, info.move, true);
     chessBoard->update();
     playTipSound(info, gameResult);
+
+    if (gameResult != -1)
+    {
+        if (gameResult != 0)
+        {
+            updateGeneralDisplay(gameResult);
+        }
+
+        showResultView(gameResult);
+    }
+
+    gameOver = gameResult != -1;
+}
+
+void MainWindow::processIllegalMoveEvent()
+{
+    QSound::play(AUDIO_ILLEGAL);
 }
 
 void MainWindow::playTipSound(const MoveInfo &info, int gameResult)
@@ -152,6 +189,67 @@ void MainWindow::playGameResultSound(int gameResult)
     else
     {
         QSound::play(AUDIO_TIE);
+    }
+}
+
+void MainWindow::addToStepList(const MoveInfo &info)
+{
+    bool blackSide = isBlackSide(info.movingChessman);
+    if (blackSide)
+    {
+        rightStepList->addMoveHistory(info);
+    }
+    else
+    {
+        leftStepList->addMoveHistory(info);
+    }
+}
+
+void MainWindow::updateGeneralDisplay(int gameResult)
+{
+    int pos = 0;
+    switch(gameResult)
+    {
+    case BLACK:
+        {
+            if (chessHandler->getDeadOne() == RED &&
+                (pos = chessHandler->getGeneralPos(RED_GENERAL)) > 0)
+            {
+                chessBoard->updateGeneralDisplay(RED_GENERAL, pos, true);
+            }
+        }
+        break;
+    case RED:
+        {
+            if (chessHandler->getDeadOne() == BLACK &&
+                (pos = chessHandler->getGeneralPos(BLACK_GENERAL)) > 0)
+            {
+                chessBoard->updateGeneralDisplay(BLACK_GENERAL, pos, true);
+            }
+        }
+        break;
+    default:
+        break;
+    }
+
+    chessBoard->update();
+}
+
+void MainWindow::showResultView(int gameResult)
+{
+    switch (gameResult)
+    {
+    case TIE:
+        QMessageBox::about(NULL, tr("比赛结果"), tr("和局"));
+        break;
+    case BLACK:
+        QMessageBox::about(NULL, tr("比赛结果"), tr("黑方胜"));
+        break;
+    case RED:
+        QMessageBox::about(NULL, tr("比赛结果"), tr("红方胜"));
+        break;
+    default:
+        break;
     }
 }
 

@@ -34,6 +34,8 @@ public:
     int getGameResult();
 
     const char *getChessman();
+    char getDeadOne();
+    int getGeneralPos(char general);
 
 signals:
     void refreshGame(int refreshType);

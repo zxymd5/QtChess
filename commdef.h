@@ -28,6 +28,18 @@ struct MoveInfo
     }
 };
 
+struct ChineseMoveStep
+{
+    int orderNumber;
+    QString moveStepInfo;
+    QString moveStepTime;
+
+    ChineseMoveStep()
+    {
+        orderNumber = 0;
+    }
+};
+
 static const QString INDICATOR = QObject::tr(":/images/WOOD/OOS.GIF");
 static const QString AUDIO_NEW_GAME = QObject::tr(":/audios/NewGame.wav");
 static const QString AUDIO_ATTACK_KING = QObject::tr(":/audios/AttackKing.wav");
@@ -66,6 +78,8 @@ static const int STEPLIST_WIDTH = 200;
 static const int STEPLIST_HEIGHT = 640;
 static const int RIGHTSTEPLIST_STARTX = 800;
 static const int RIGHTSTEPLIST_STARTY = 100;
+static const int MOVE_STEP_PER_PAGE = 15;
+static const int COLUMN_PER_STEP = 3;
 
 static const int SQUARE_SIZE = 56;
 static const int BOARD_EDGE = 8;
@@ -620,6 +634,21 @@ static QString getChessmanPic(char chessman, bool selected, bool dead)
         break;
     }
     return chessmanPic;
+}
+
+static int getChessmanTypeByCode(QChar code)
+{
+    int chessmanType = 0;
+    for (int i = 0; i < 14; ++i)
+    {
+        if (CHESSMAN_CODE.at(i) == code)
+        {
+            chessmanType = i + 1;
+            break;
+        }
+    }
+
+    return chessmanType;
 }
 
 #endif // COMMDEF

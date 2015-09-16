@@ -21,8 +21,12 @@ public:
     void initActions();
     void processNewGameEvent();
     void processUpdateMoveEvent();
+    void processIllegalMoveEvent();
     void playTipSound(const MoveInfo &info, int gameResult);
     void playGameResultSound(int gameResult);
+    void addToStepList(const MoveInfo &info);
+    void updateGeneralDisplay(int gameResult);
+    void showResultView(int gameResult);
 
     ~MainWindow();
 
@@ -31,6 +35,8 @@ private slots:
     void newGame();
     void settings();
     void flipChessBoard();
+    void save();
+    void open();
 
     void doMove(int index);
 

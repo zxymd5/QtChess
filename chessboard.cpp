@@ -98,6 +98,12 @@ void ChessBoard::showMoveRoute(char movingChessman, int move, bool show)
 
 }
 
+void ChessBoard::updateGeneralDisplay(char chessman, int pos, bool dead)
+{
+    int index = getChessboardCoord(FILE_X(pos), RANK_Y(pos), fliped);
+    arrChessman[index].load(getChessmanPic(chessman, true, dead));
+}
+
 void ChessBoard::changeFlip()
 {
     fliped = !fliped;

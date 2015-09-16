@@ -38,6 +38,12 @@ public:
     static QString chessManCodeToChinese(const QChar &code);
     static QString actionToChinese(const QChar &action);
     static void alphaFmtToChiness(const QString &alphaFmt, QString &chineseFmt, bool black);
+
+    //保存棋局结果为FEN串
+    static QString chessmanToFEN(const char *chessman, int currentTurn);
+    //从FEE串加载棋局
+    static void FENTochessman(QString strFEN, char arrChessman[]);
+
 };
 
 #endif // MOVEGENERATOR_H

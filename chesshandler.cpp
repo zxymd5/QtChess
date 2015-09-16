@@ -131,7 +131,10 @@ void ChessHandler::doMove(int index)
     }
     else
     {
-        emit refreshGame(EVENT_ILLEGAL_MOVE);
+        if (currentMoveInfo.movingChessman > 0)
+        {
+            emit refreshGame(EVENT_ILLEGAL_MOVE);
+        }
     }
 }
 
@@ -379,5 +382,25 @@ int ChessHandler::getGameResult()
 const char *ChessHandler::getChessman()
 {
     return arrChessman;
+}
+
+char ChessHandler::getDeadOne()
+{
+    return whoIsDead;
+}
+
+int ChessHandler::getGeneralPos(char general)
+{
+    int pos = 0;
+    for (int i = 0; i < 256; ++i)
+    {
+        if (arrChessman[i] == general)
+        {
+            pos = i;
+            break;
+        }
+    }
+
+    return pos;
 }
 

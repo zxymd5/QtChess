@@ -18,6 +18,7 @@ public:
     void mousePressEvent(QMouseEvent *event);
     void loadPixmap(const char *chessman);
     void showMoveRoute(char movingChessman, int move, bool show);
+    void updateGeneralDisplay(char chessman, int pos, bool dead);
     void changeFlip();
 
 public slots:

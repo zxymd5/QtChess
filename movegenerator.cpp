@@ -838,3 +838,45 @@ void MoveGenerator::alphaFmtToChiness(const QString &alphaFmt, QString &chineseF
     }
 }
 
+QString MoveGenerator::chessmanToFEN(const char *chessman, int currentTurn)
+{
+//    int i, j, k, pc;
+//    char fen[256];
+//    memset(fen, 0, sizeof(fen));
+
+//    for (i = RANK_TOP; i <= RANK_BOTTOM; i++) {
+//      k = 0;
+//      for (j = FILE_LEFT; j <= FILE_RIGHT; j ++) {
+//        pc = chessman[COORD_XY(j, i)];
+//        if (pc != 0) {
+//          if (k > 0) {
+//            *fen = k + '0';
+//            fen ++;
+//            k = 0;
+//          }
+//          *fen = CHESSMAN_CODE.at(pc - 1).toLatin1();
+//          fen ++;
+//        } else {
+//          k ++;
+//        }
+//      }
+//      if (k > 0) {
+//        *fen = k + '0';
+//        fen ++;
+//      }
+//      *fen = '/';
+//      fen ++;
+//    }
+//    *(fen - 1) = ' '; // 把最后一个'/'替换成' '
+//    *fen = (currentTurn == RED ? 'w' : 'b');
+//    fen ++;
+//    *fen = '\0';
+
+    return QString("%1").arg("123456");
+}
+
+void MoveGenerator::FENTochessman(QString strFEN, char arrChessman[])
+{
+
+}
+

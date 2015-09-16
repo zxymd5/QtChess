@@ -1,6 +1,8 @@
 #ifndef STEPLIST_H
 #define STEPLIST_H
 
+#include "commdef.h"
+
 #include <QWidget>
 #include <QTableView>
 #include <QStandardItem>
@@ -9,6 +11,7 @@
 #include <QLabel>
 #include <QPixmap>
 #include <QPaintEvent>
+#include <QVector>
 
 class StepList : public QWidget
 {
@@ -19,6 +22,11 @@ public:
     void initPushButtons();
     void initPageInfo();
     void initTableView();
+    void addMoveHistory(const MoveInfo &info);
+    void clearHistoryDisplay();
+    void updateHistoryDisplay();
+    int getPageNumber(int orderNumber);
+    int getRecordIndex(int orderNumber);
 
 protected:
     void paintEvent(QPaintEvent *event);
@@ -26,6 +34,11 @@ protected:
 signals:
 
 public slots:
+    void prevRecord();
+    void prevPage();
+    void nextRecord();
+    void nextPage();
+
 private:
     QPixmap pixSide;
     QTableView  *tableView;
@@ -35,6 +48,8 @@ private:
     QPushButton *btnNextRecord;
     QPushButton *btnNextPage;
     QLabel *lblPageInfo;
+    QVector<ChineseMoveStep> vecMoveHistory;
+    int currentOrderNumber;
 };
 
 #endif // STEPLIST_H
