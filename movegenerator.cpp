@@ -453,7 +453,7 @@ void MoveGenerator::getSoldierMoveStepAlpha(const char *arrChessman, char moving
     else
     {
         stepAlpha += fromY > toY ? (black ? '-' : '+') : (black ? '+' : '-');
-        stepAlpha += abs(fromX - toX) + '0';
+        stepAlpha += abs(fromY - toY) + '0';
     }
 }
 

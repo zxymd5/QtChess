@@ -95,7 +95,6 @@ void ChessBoard::showMoveRoute(char movingChessman, int move, bool show)
         dstIndex = getChessboardCoord(FILE_X(dstPos), RANK_Y(dstPos), fliped);
         arrChessman[dstIndex].load(getChessmanPic(movingChessman, show, false));
     }
-
 }
 
 void ChessBoard::updateGeneralDisplay(char chessman, int pos, bool dead)

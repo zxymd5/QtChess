@@ -18,6 +18,7 @@ MainWindow::MainWindow(QWidget *parent) :
     settingsDialog->setVisible(false);
     gameStarted = false;
     gameOver = false;
+    lastMoveInfo.reset();
 
     initActions();
 }
@@ -119,6 +120,7 @@ void MainWindow::processNewGameEvent()
     rightStepList->clearHistoryDisplay();
     gameOver = false;
     gameStarted = true;
+    lastMoveInfo.reset();
 }
 
 void MainWindow::processUpdateMoveEvent()
@@ -132,8 +134,14 @@ void MainWindow::processUpdateMoveEvent()
         chessBoard->loadPixmap(chessHandler->getChessman());
         addToStepList(info);
     }
+
+    if (isSameSide(lastMoveInfo.movingChessman, info.movingChessman))
+    {
+        chessBoard->showMoveRoute(lastMoveInfo.movingChessman, lastMoveInfo.move, false);
+    }
     chessBoard->showMoveRoute(info.movingChessman, info.move, true);
     chessBoard->update();
+
     playTipSound(info, gameResult);
 
     if (gameResult != -1)
@@ -146,6 +154,7 @@ void MainWindow::processUpdateMoveEvent()
         showResultView(gameResult);
     }
 
+    lastMoveInfo = info;
     gameOver = gameResult != -1;
 }
 

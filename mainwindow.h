@@ -51,6 +51,7 @@ private:
     SettingsDialog *settingsDialog;
     bool gameStarted;
     bool gameOver;
+    MoveInfo lastMoveInfo;
 };
 
 #endif // MAINWINDOW_H

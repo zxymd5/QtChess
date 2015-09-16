@@ -89,7 +89,7 @@ void StepList::addMoveHistory(const MoveInfo &info)
     ChineseMoveStep moveStep;
     moveStep.orderNumber = vecMoveHistory.size() + 1;
     MoveGenerator::alphaFmtToChiness(info.moveStepAlpha, moveStep.moveStepInfo, isBlackSide(info.movingChessman));
-    moveStep.moveStepTime = QDateTime::currentDateTime().toString(tr("yyyy-MM-dd hh:mm:ss"));
+    moveStep.moveStepTime = QDateTime::currentDateTime().toString(tr("hh:mm:ss"));
     vecMoveHistory.push_back(moveStep);
 
     currentOrderNumber = vecMoveHistory.size();
@@ -139,13 +139,13 @@ void StepList::nextPage()
 
 void StepList::updateHistoryDisplay()
 {
-    QModelIndex index;
+    QModelIndex modelIndex;
     for (int i = 0; i < MOVE_STEP_PER_PAGE; ++i)
     {
         for (int j = 0; j < COLUMN_PER_STEP; ++j)
         {
-            index = model->index(i, j, QModelIndex());
-            model->setData(index, tr(""));
+            modelIndex = model->index(i, j, QModelIndex());
+            model->setData(modelIndex, tr(""));
         }
     }
 
@@ -165,7 +165,6 @@ void StepList::updateHistoryDisplay()
         int startIndex = (currentPage - 1) * MOVE_STEP_PER_PAGE;
         int endIndex = std::min(currentPage * MOVE_STEP_PER_PAGE, vecMoveHistory.size()) - 1;
 
-        QModelIndex modelIndex;
         for (int i = startIndex; i <= endIndex; i++)
         {
             modelIndex = model->index(i, 0, QModelIndex());
@@ -177,6 +176,8 @@ void StepList::updateHistoryDisplay()
             modelIndex = model->index(i, 2, QModelIndex());
             model->setData(modelIndex, vecMoveHistory.at(i).moveStepTime);
         }
+
+        modelIndex = model->index(currentRecordIndex - 1, 0, QModelIndex());
         tableView->setCurrentIndex(modelIndex);
 
         btnPrevRecord->setEnabled(currentRecordIndex > 1);

@@ -81,8 +81,8 @@ static const int RIGHTSTEPLIST_STARTY = 100;
 static const int MOVE_STEP_PER_PAGE = 15;
 static const int COLUMN_PER_STEP = 3;
 
-static const int SQUARE_SIZE = 56;
-static const int BOARD_EDGE = 8;
+static const int SQUARE_SIZE = 57;
+static const int BOARD_EDGE = 4;
 
 // 棋盘范围
 static const int RANK_TOP = 3;
