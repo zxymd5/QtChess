@@ -838,45 +838,78 @@ void MoveGenerator::alphaFmtToChiness(const QString &alphaFmt, QString &chineseF
     }
 }
 
-QString MoveGenerator::chessmanToFEN(const char *chessman, int currentTurn)
+QString MoveGenerator::chessmanToFEN(const char *arrChessman, int currentTurn)
 {
-//    int i, j, k, pc;
-//    char fen[256];
-//    memset(fen, 0, sizeof(fen));
+    int k = 0;
+    QString strFEN;
+    for (int i = RANK_TOP; i <= RANK_BOTTOM; ++i)
+    {
+        k = 0;
+        for (int j = FILE_LEFT; j <= FILE_RIGHT; ++j)
+        {
+            int coord = COORD_XY(j, i);
+            char chessman = arrChessman[coord];
+            if (chessman == 0)
+            {
+                k++;
 
-//    for (i = RANK_TOP; i <= RANK_BOTTOM; i++) {
-//      k = 0;
-//      for (j = FILE_LEFT; j <= FILE_RIGHT; j ++) {
-//        pc = chessman[COORD_XY(j, i)];
-//        if (pc != 0) {
-//          if (k > 0) {
-//            *fen = k + '0';
-//            fen ++;
-//            k = 0;
-//          }
-//          *fen = CHESSMAN_CODE.at(pc - 1).toLatin1();
-//          fen ++;
-//        } else {
-//          k ++;
-//        }
-//      }
-//      if (k > 0) {
-//        *fen = k + '0';
-//        fen ++;
-//      }
-//      *fen = '/';
-//      fen ++;
-//    }
-//    *(fen - 1) = ' '; // 把最后一个'/'替换成' '
-//    *fen = (currentTurn == RED ? 'w' : 'b');
-//    fen ++;
-//    *fen = '\0';
+                if (j == FILE_RIGHT)
+                {
+                    strFEN.append(k + '0');
+                    strFEN.append('/');
+                }
+            }
+            else
+            {
+                if (k > 0)
+                {
+                    strFEN.append(k + '0');
+                    k = 0;
+                }
+                strFEN.append(CHESSMAN_CODE.at(chessman - 1));
+                if (j == FILE_RIGHT)
+                {
+                    strFEN.append('/');
+                }
+            }
+        }
+    }
 
-    return QString("%1").arg("123456");
+    strFEN.replace(strFEN.size() - 1, 1, ' ');
+    strFEN.append(currentTurn == BLACK ? 'b' : 'w');
+    return strFEN;
 }
 
-void MoveGenerator::FENTochessman(QString strFEN, char arrChessman[])
+void MoveGenerator::FENTochessman(QString strFEN, char *arrChessman, int &currentTurn)
 {
+    int slashCount = 0;
+    int i = 0;
+    int k = 0;
+    while (strFEN[i] != ' ')
+    {
+        int coord = COORD_XY(FILE_LEFT + k, slashCount + RANK_TOP);
+        if (strFEN[i] >= 'A' && strFEN[i] <= 'z')
+        {
+            char type = getChessmanTypeByCode(strFEN[i]);
+            arrChessman[coord] = type;
+            k++;
+        }
+        if (strFEN[i] >= '0' && strFEN[i] <= '9')
+        {
+            k += (strFEN[i].toLatin1() - '0');
+        }
 
+        if (strFEN[i] == '/')
+        {
+            slashCount++;
+            k = 0;
+        }
+
+        i++;
+    }
+
+    i++;
+
+    currentTurn = (strFEN[i] == 'w') ? RED : BLACK;
 }
 
