@@ -167,13 +167,13 @@ void StepList::updateHistoryDisplay()
 
         for (int i = startIndex; i <= endIndex; i++)
         {
-            modelIndex = model->index(i, 0, QModelIndex());
+            modelIndex = model->index(i % MOVE_STEP_PER_PAGE, 0, QModelIndex());
             model->setData(modelIndex, vecMoveHistory.at(i).orderNumber);
 
-            modelIndex = model->index(i, 1, QModelIndex());
+            modelIndex = model->index(i % MOVE_STEP_PER_PAGE, 1, QModelIndex());
             model->setData(modelIndex, vecMoveHistory.at(i).moveStepInfo);
 
-            modelIndex = model->index(i, 2, QModelIndex());
+            modelIndex = model->index(i % MOVE_STEP_PER_PAGE, 2, QModelIndex());
             model->setData(modelIndex, vecMoveHistory.at(i).moveStepTime);
         }
 

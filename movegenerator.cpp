@@ -427,7 +427,7 @@ void MoveGenerator::getSoldierMoveStepAlpha(const char *arrChessman, char moving
         char order = 'c'; //前
         for (int i = 0; i < chessmanCount; i++)
         {
-            if (RANK_Y(pos[columnForEachSoldier[i]]) == toY)
+            if (RANK_Y(pos[columnForEachSoldier[i]]) == (black ? toY - 1 : toY + 1))
             {
                 stepAlpha[1] = order;
             }
