@@ -36,6 +36,9 @@ public:
     const char *getChessman();
     char getDeadOne();
     int getGeneralPos(char general);
+    int getCurrentTurn();
+    void setCurrentTurn(int turn);
+    void setChessman(const char *arrChessman);
 
 signals:
     void refreshGame(int refreshType);

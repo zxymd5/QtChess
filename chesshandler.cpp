@@ -404,3 +404,18 @@ int ChessHandler::getGeneralPos(char general)
     return pos;
 }
 
+int ChessHandler::getCurrentTurn()
+{
+    return currentTurn;
+}
+
+void ChessHandler::setCurrentTurn(int turn)
+{
+    currentTurn = turn;
+}
+
+void ChessHandler::setChessman(const char *chessman)
+{
+    memcpy(arrChessman, chessman, sizeof(arrChessman));
+}
+

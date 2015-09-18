@@ -3,6 +3,9 @@
 #include "commdef.h"
 #include <QSound>
 #include <QMessageBox>
+#include <QFile>
+#include <QFileDialog>
+#include <QTextStream>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -80,12 +83,48 @@ void MainWindow::flipChessBoard()
 //保存棋局为FEN串
 void MainWindow::save()
 {
+    QString fn = QFileDialog::getSaveFileName(this, tr("保存棋局"), QString(), tr("Plain text Files(*.txt);;All Files (*)"));
+    if (fn.isEmpty())
+    {
+        return;
+    }
+    if (! fn.endsWith(".txt",Qt::CaseInsensitive))
+    {
+        fn += ".txt";
+    }
 
+    QFile file(fn);
+    if (!file.open(QIODevice::ReadWrite | QIODevice::Text))
+    {
+        return;
+    }
+    QTextStream out(&file);
+    out << MoveGenerator::chessmanToFEN(chessHandler->getChessman(), chessHandler->getCurrentTurn());
+    file.close();
 }
 
 //从FEE串加载棋局
 void MainWindow::open()
 {
+    QString fn = QFileDialog::getOpenFileName(this,tr("加载棋局"),QString(),tr("All Files(*);;Text Files(*.txt)"));
+    QFile file(fn);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        return;
+    }
+    QTextStream in(&file);
+    QString line = in.readLine();
+    if (line.isNull())
+    {
+        return;
+    }
+
+    char arrChessman[256];
+    int currentTurn = 0;
+    memset(arrChessman, 0, sizeof(arrChessman));
+    MoveGenerator::FENTochessman(line, arrChessman, currentTurn);
+    chessHandler->setChessman(arrChessman);
+    chessHandler->setCurrentTurn(currentTurn);
 
 }
 
