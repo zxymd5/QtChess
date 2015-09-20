@@ -16,9 +16,10 @@ public:
     ~ChessHandler();
     void startGame();
     void newGame();
-    void reset();
+    void messGame(const char *chessman, int turn);
+    void reset(int turn);
     void resetZobrist();
-    void resetChessmanLayout();
+    void setChessmanLayout(const char *chessman);
     void addChessman(int index, char chessmanType);
     void delChessman(int index, char chessmanType);
     void doMove(int index);

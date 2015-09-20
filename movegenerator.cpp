@@ -1,6 +1,7 @@
 #include "movegenerator.h"
 #include "commdef.h"
 #include <math.h>
+#include <QDebug>
 
 MoveGenerator::MoveGenerator()
 {
@@ -337,111 +338,104 @@ void MoveGenerator::getSoldierMoveStepAlpha(const char *arrChessman, char moving
     stepAlpha += (abs(edge - fromX) + 1 + '0');
 
     int mark = 0;
+    int sameCoulumnPos[5];
+    int soldierCountOnEachColumn[16];
+    memset(sameCoulumnPos, 0, 5 * sizeof(int));
+    memset(soldierCountOnEachColumn, 0, 16 * sizeof(int));
     for (int i = 0; i < chessmanCount; i++)
     {
         if (FILE_X(pos[i]) == fromX)
         {
+            sameCoulumnPos[mark] = pos[i];
             mark++;
         }
+        soldierCountOnEachColumn[FILE_X(pos[i])]++;
     }
 
     if (mark > 1)
     {
-        int soldierCountOnEachColumn[16] = {0};                                                  //九条纵线上，每条线上兵的个数
-        int columnForEachSoldier[5] = {-1, -1, -1, -1, -1};                                                       //5个兵各在哪些纵线上
-        int n = 0;
-        int start = 0;
-
-        for (int i = 0; i < chessmanCount; i++)
-        {
-            soldierCountOnEachColumn[FILE_X(pos[i])]++;
-        }
-
+        char order = 'c'; //前
         if(black)
         {
-            for (int i = 0; i < 16; i++)
+            for (int i = mark - 1; i >= 0; i--)
             {
-                if (soldierCountOnEachColumn[i] > 1)
+                if (RANK_Y(sameCoulumnPos[i]) == (fromY < toY ? toY - 1 : toY))
                 {
-                    //此纵线有两个以上的兵
-                    for (int j = 0; j < chessmanCount; j++)
-                    {
-                        if (i == FILE_X(pos[j]))
-                        {
-                            columnForEachSoldier[n] = j;
-                            n++;
-                        }
-                    }
-
-                    //为纵线上的棋子排序
-                    for (int k = start; k < n - 1; k++)
-                    {
-                        for (int j = n - 2; j >= k; j--)
-                        {
-                            if (RANK_Y(pos[columnForEachSoldier[j]]) < RANK_Y(pos[columnForEachSoldier[j + 1]]))
-                            {
-                                int tmp = columnForEachSoldier[j];
-                                columnForEachSoldier[j] = columnForEachSoldier[j + 1];
-                                columnForEachSoldier[j + 1] = tmp;
-                            }
-                        }
-                    }
-                    start = n;
+                    stepAlpha[1] = order;
+                    break;
                 }
+                order++;
             }
         }
         else
         {
-            for (int i = 15; i >= 0; i--)
+            for (int i = 0; i < mark; i++)
             {
-                if (soldierCountOnEachColumn[i] > 1)
+                if (RANK_Y(sameCoulumnPos[i]) == (fromY > toY ? toY + 1 : toY))
                 {
-                    //此纵线有两个以上的兵
-                    for (int j = 0; j < chessmanCount; j++)
-                    {
-                        if (i == FILE_X(pos[j]))
-                        {
-                            columnForEachSoldier[n] = j;
-                            n++;
-                        }
-                    }
-
-                    //为纵线上的棋子排序
-                    for (int k = start; k < n - 1; k++)
-                    {
-                        for (int j = n - 2; j >= k; j--)
-                        {
-                            if (RANK_Y(pos[columnForEachSoldier[j]]) > RANK_Y(pos[columnForEachSoldier[j + 1]]))
-                            {
-                                int tmp = columnForEachSoldier[j];
-                                columnForEachSoldier[j] = columnForEachSoldier[j + 1];
-                                columnForEachSoldier[j + 1] = tmp;
-                            }
-                        }
-                    }
-                    start = n;
+                    stepAlpha[1] = order;
+                    break;
                 }
+                order++;
             }
-        }
-
-        char order = 'c'; //前
-        for (int i = 0; i < chessmanCount; i++)
-        {
-            if (RANK_Y(pos[columnForEachSoldier[i]]) == (black ? toY - 1 : toY + 1))
-            {
-                stepAlpha[1] = order;
-            }
-            order++;
         }
 
         //转换成前后或前中后
-        if (start == 2)
+        int moreSoldierColumn[2];
+        int soldierPerColumn[2];
+        int j = 0;
+        memset(moreSoldierColumn, 0, 2 * sizeof(int));
+        memset(soldierPerColumn, 0, 2 * sizeof(int));
+
+        for (int i = 0; i < 16; ++i)
         {
-            stepAlpha[1] = stepAlpha[1] == 'c' ? 'q' : 'h';
+            if (soldierCountOnEachColumn[i] > 1)
+            {
+                moreSoldierColumn[j] = i;
+                soldierPerColumn[j] = soldierCountOnEachColumn[i];
+                j++;
+            }
         }
-        else if (start == 3)
+
+        bool inMoreSoldierColumn = false;
+        int index = -1;
+        for (int i = 0; i < 2; ++i)
         {
-            stepAlpha[1] = stepAlpha[1] == 'c' ? 'q' : (stepAlpha[1] == 'd' ? 'z' : 'h');
+            if (moreSoldierColumn[i] == fromX && j > 1)
+            {
+                index = i;
+                inMoreSoldierColumn = true;
+                break;
+            }
+        }
+
+        if (!inMoreSoldierColumn)
+        {
+            if (mark == 2)
+            {
+                stepAlpha[1] = stepAlpha[1] == 'c' ? 'q' : 'h';
+            }
+            else if (mark == 3)
+            {
+                stepAlpha[1] = stepAlpha[1] == 'c' ? 'q' : (stepAlpha[1] == 'd' ? 'z' : 'h');
+            }
+        }
+        else
+        {
+            if (black)
+            {
+                if (index == 1)
+                {
+                    stepAlpha[1] = stepAlpha[1].toLatin1() + soldierPerColumn[0];
+                }
+            }
+            else
+            {
+                if (index == 0)
+                {
+                    stepAlpha[1] = stepAlpha[1].toLatin1() + soldierPerColumn[1] ;
+                }
+            }
         }
     }
 

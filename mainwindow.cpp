@@ -123,9 +123,7 @@ void MainWindow::open()
     int currentTurn = 0;
     memset(arrChessman, 0, sizeof(arrChessman));
     MoveGenerator::FENTochessman(line, arrChessman, currentTurn);
-    chessHandler->setChessman(arrChessman);
-    chessHandler->setCurrentTurn(currentTurn);
-
+    chessHandler->messGame(arrChessman, currentTurn);
 }
 
 void MainWindow::doMove(int index)

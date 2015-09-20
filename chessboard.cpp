@@ -39,20 +39,12 @@ void ChessBoard::paintEvent(QPaintEvent *event)
 void ChessBoard::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton) {
-        qDebug() << event->pos().x() << tr(" ") << event->pos().y();
         int row = 0;
         int column = 0;
         getPixmapIndex(event->pos().x(), event->pos().y(), row, column);
 
         int sq = getChessmanIndex(row, column, fliped);
         emit doMove(sq);
-//        int pc = STARTUP_LAYOUT[sq];
-//        if(pc != 0)
-//        {
-//            arrChessman[row * CHESSBOARD_COLUMN + column].load(getChessmanPic(pc, true, false));
-//        }
-
-//        update();
     }
 }
 

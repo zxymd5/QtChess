@@ -19,16 +19,25 @@ void ChessHandler::startGame()
 
 void ChessHandler::newGame()
 {
-    reset();
+    reset(g_gameSettings.getAhead());
     resetZobrist();
     currentMoveInfo.reset();
-    resetChessmanLayout();
+    setChessmanLayout(STARTUP_LAYOUT);
     emit refreshGame(EVENT_NEW_GAME);
 }
 
-void ChessHandler::reset()
+void ChessHandler::messGame(const char *chessman, int turn)
 {
-    currentTurn = g_gameSettings.getAhead();
+    reset(turn);
+    currentMoveInfo.reset();
+    resetZobrist();
+    setChessmanLayout(chessman);
+    emit refreshGame(EVENT_NEW_GAME);
+}
+
+void ChessHandler::reset(int turn)
+{
+    currentTurn = turn;
     currentSearchMoveTurn = currentTurn;
     gameResult = -1;
     whoIsDead = 0;
@@ -53,13 +62,13 @@ void ChessHandler::resetZobrist()
     currentZobrist.reset();
 }
 
-void ChessHandler::resetChessmanLayout()
+void ChessHandler::setChessmanLayout(const char *chessman)
 {
     for (int i = 0; i < 256; ++i)
     {
-        if(STARTUP_LAYOUT[i] != 0)
+        if(chessman[i] != 0)
         {
-            addChessman(i, STARTUP_LAYOUT[i]);
+            addChessman(i, chessman[i]);
         }
     }
 }
