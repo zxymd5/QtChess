@@ -33,6 +33,9 @@ void MainWindow::initActions()
     connect(ui->actionFlip, SIGNAL(triggered()), this, SLOT(flipChessBoard()));
     connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(save()));
     connect(ui->actionOpen, SIGNAL(triggered()), this, SLOT(open()));
+    connect(ui->actionUndo, SIGNAL(triggered()), this, SLOT(fallback()));
+    connect(ui->actionLose, SIGNAL(triggered()), this, SLOT(loseGame()));
+    connect(ui->actionTie, SIGNAL(triggered()), this, SLOT(drawnGame()));
     connect(chessBoard, SIGNAL(doMove(int)), this, SLOT(doMove(int)));
     connect(chessHandler, SIGNAL(refreshGame(int)), this, SLOT(processEvent(int)));
 }
@@ -126,6 +129,21 @@ void MainWindow::open()
     chessHandler->messGame(arrChessman, currentTurn);
 }
 
+void MainWindow::fallback()
+{
+    chessHandler->fallback();
+}
+
+void MainWindow::loseGame()
+{
+
+}
+
+void MainWindow::drawnGame()
+{
+
+}
+
 void MainWindow::doMove(int index)
 {
     chessHandler->doMove(index);
@@ -143,6 +161,9 @@ void MainWindow::processEvent(int event)
         break;
     case EVENT_ILLEGAL_MOVE:
         processIllegalMoveEvent();
+        break;
+    case EVENT_FALLBACK:
+        processFallbackEvent();
         break;
     default:
         break;
@@ -198,6 +219,15 @@ void MainWindow::processUpdateMoveEvent()
 void MainWindow::processIllegalMoveEvent()
 {
     QSound::play(AUDIO_ILLEGAL);
+}
+
+void MainWindow::processFallbackEvent()
+{
+    chessBoard->loadPixmap(chessHandler->getChessman());
+    chessBoard->update();
+    lastMoveInfo = chessHandler->getCurrentMoveInfo();
+    leftStepList->fallbackMoveHistory();
+    rightStepList->fallbackMoveHistory();
 }
 
 void MainWindow::playTipSound(const MoveInfo &info, int gameResult)

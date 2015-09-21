@@ -27,6 +27,7 @@ public:
     void updateHistoryDisplay();
     int getPageNumber(int orderNumber);
     int getRecordIndex(int orderNumber);
+    void fallbackMoveHistory();
 
 protected:
     void paintEvent(QPaintEvent *event);

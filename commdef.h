@@ -110,6 +110,7 @@ static const char RED_SOLDIER = 14;      //红兵
 static const int EVENT_NEW_GAME = 1;
 static const int EVENT_UPDATE_MOVE = 2;
 static const int EVENT_ILLEGAL_MOVE = 3;
+static const int EVENT_FALLBACK = 4;
 
 // 判断棋子是否在棋盘中的数组
 static const char ccInBoard[256] = {

@@ -22,6 +22,7 @@ public:
     void processNewGameEvent();
     void processUpdateMoveEvent();
     void processIllegalMoveEvent();
+    void processFallbackEvent();
     void playTipSound(const MoveInfo &info, int gameResult);
     void playGameResultSound(int gameResult);
     void addToStepList(const MoveInfo &info);
@@ -37,6 +38,9 @@ private slots:
     void flipChessBoard();
     void save();
     void open();
+    void fallback();
+    void loseGame();
+    void drawnGame();
 
     void doMove(int index);
 

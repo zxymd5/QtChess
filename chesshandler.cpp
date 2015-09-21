@@ -35,6 +35,34 @@ void ChessHandler::messGame(const char *chessman, int turn)
     emit refreshGame(EVENT_NEW_GAME);
 }
 
+void ChessHandler::fallback()
+{
+    if (lstMoveInfo.size() > 0)
+    {
+        if (lstMoveInfo.size() == 1)
+        {
+            undoMakeMove();
+        }
+        else
+        {
+            undoMakeMove();
+            undoMakeMove();
+        }
+        emit refreshGame(EVENT_FALLBACK);
+        currentMoveInfo.reset();
+    }
+}
+
+void ChessHandler::loseGame()
+{
+
+}
+
+void ChessHandler::drawnGame()
+{
+
+}
+
 void ChessHandler::reset(int turn)
 {
     currentTurn = turn;
@@ -327,6 +355,41 @@ void ChessHandler::doMakeMove(MoveInfo &info, bool record)
     }
     currentSearchMoveTurn = currentSearchMoveTurn == BLACK ? RED : BLACK;
 
+    currentZobrist.Xor(initZobrist);
+}
+
+void ChessHandler::undoMakeMove()
+{
+    MoveInfo info = lstMoveInfo.back();
+
+    delChessman(DST(info.move), info.movingChessman);
+    addChessman(SRC(info.move), info.movingChessman);
+    if (info.killedChessman > 0)
+    {
+        addChessman(DST(info.move), info.killedChessman);
+    }
+
+    lstMoveInfo.pop_back();
+    currentTurn = (currentTurn == BLACK ? RED : BLACK);
+    currentSearchMoveTurn = currentTurn;
+    currentZobrist.Xor(initZobrist);
+
+    if (lstMoveInfo.size() > 0)
+    {
+        currentMoveInfo = lstMoveInfo.back();
+    }
+}
+
+void ChessHandler::undoMakeMove(MoveInfo &info)
+{
+    delChessman(DST(info.move), info.movingChessman);
+    addChessman(SRC(info.move), info.movingChessman);
+    if (info.killedChessman > 0)
+    {
+        addChessman(DST(info.move), info.killedChessman);
+    }
+
+    currentSearchMoveTurn = (currentSearchMoveTurn == BLACK ? RED : BLACK);
     currentZobrist.Xor(initZobrist);
 }
 

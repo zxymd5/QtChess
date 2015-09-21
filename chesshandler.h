@@ -17,6 +17,9 @@ public:
     void startGame();
     void newGame();
     void messGame(const char *chessman, int turn);
+    void fallback();
+    void loseGame();
+    void drawnGame();
     void reset(int turn);
     void resetZobrist();
     void setChessmanLayout(const char *chessman);
@@ -27,6 +30,8 @@ public:
     bool blackDoMove(int index);
     void applyMove();
     void doMakeMove(MoveInfo &info, bool record = true);
+    void undoMakeMove();
+    void undoMakeMove(MoveInfo &info);
     int repStatus(int recur);
     int repValue(int repStatus);
 

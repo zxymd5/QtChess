@@ -113,6 +113,16 @@ int StepList::getRecordIndex(int orderNumber)
     return orderNumber % MOVE_STEP_PER_PAGE == 0 ? MOVE_STEP_PER_PAGE : orderNumber % MOVE_STEP_PER_PAGE;
 }
 
+void StepList::fallbackMoveHistory()
+{
+    if (vecMoveHistory.size() > 0)
+    {
+        vecMoveHistory.pop_back();
+        currentOrderNumber = vecMoveHistory.size();
+        updateHistoryDisplay();
+    }
+}
+
 void StepList::prevRecord()
 {
     currentOrderNumber--;
