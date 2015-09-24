@@ -55,12 +55,20 @@ void ChessHandler::fallback()
 
 void ChessHandler::loseGame()
 {
-
+    if (gameResult == -1)
+    {
+        gameResult = g_gameSettings.getCompetitorSide();
+        emit refreshGame(EVENT_GAME_RESULT);
+    }
 }
 
 void ChessHandler::drawnGame()
 {
-
+    if (gameResult == -1)
+    {
+        gameResult = TIE;
+        emit refreshGame(EVENT_GAME_RESULT);
+    }
 }
 
 void ChessHandler::reset(int turn)
@@ -156,7 +164,11 @@ void ChessHandler::doMove(int index)
         {
             applyMove();
 
-            //电脑走棋
+            if (g_gameSettings.getGameType() == COMPITITOR_MACHINE)
+            {
+                //电脑走棋
+                computerMove();
+            }
         }
         else
         {
@@ -332,6 +344,13 @@ void ChessHandler::applyMove()
     currentMoveInfo.reset();
 }
 
+void ChessHandler::computerMove()
+{
+    minMaxSearch(MAX_SEARCH_DEPTH, currentMoveInfo);
+    moveGenerator.getMoveStepAlpha(arrChessman, currentMoveInfo.move, currentMoveInfo.moveStepAlpha);
+    applyMove();
+}
+
 void ChessHandler::doMakeMove(MoveInfo &info, bool record)
 {
     int fromPos = SRC(info.move);
@@ -434,6 +453,71 @@ int ChessHandler::repValue(int repStatus)
         ((repStatus & 4) == 0 ? 0 : BAN_VALUE);
 
     return retVal == 0 ? ((lstMoveInfo.size() & 1) == 0 ? -DRAW_VALUE : DRAW_VALUE) : retVal;
+}
+
+void ChessHandler::stepTimeOver()
+{
+    if (gameResult == -1)
+    {
+        gameResult = currentTurn == BLACK ? RED : BLACK;
+
+        emit refreshGame(EVENT_GAME_RESULT);
+    }
+}
+
+int ChessHandler::minMaxSearch(int depth, MoveInfo &info)
+{
+    int bestValue = isMySide() ? MATE_VALUE : -MATE_VALUE;
+    int value = 0;
+
+    if (depth == 0)
+    {
+        return evaluate();
+    }
+
+     QList<MoveInfo> lstInfo;
+     moveGenerator.generateAllMove(arrChessman, currentSearchMoveTurn, lstInfo);
+     for (QList<MoveInfo>::iterator it = lstInfo.begin(); it != lstInfo.end(); ++it)
+     {
+         doMakeMove(*it, false);
+         value = minMaxSearch(depth - 1, info);
+         undoMakeMove(*it);
+
+         if (isMySide())
+         {
+             if (value < bestValue)
+             {
+                 bestValue = value;
+                 if (depth == MAX_SEARCH_DEPTH)
+                 {
+                     info = *it;
+                 }
+             }
+         }
+         else
+         {
+             if (value > bestValue)
+             {
+                 bestValue = value;
+                 if (depth == MAX_SEARCH_DEPTH)
+                 {
+                     info = *it;
+                 }
+             }
+         }
+     }
+
+     return bestValue;
+}
+
+int ChessHandler::evaluate()
+{
+    return g_gameSettings.getCompetitorSide() == RED ? redValue - blackValue : blackValue - redValue;
+}
+
+bool ChessHandler::isMySide()
+{
+    return !(g_gameSettings.getCompetitorSide() == currentSearchMoveTurn);
 }
 
 const MoveInfo &ChessHandler::getCurrentMoveInfo()

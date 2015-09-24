@@ -161,6 +161,213 @@ bool MoveGenerator::validateSoldierMove(const char *arrChessman, int srcPos, int
     return dstPos == SQUARE_FORWARD(srcPos, side);
 }
 
+void MoveGenerator::addMoveRoute(char *arrChessman, int srcPos, int dstPos, MoveInfo &info, QList<MoveInfo> &lstInfo)
+{
+    int killedChessman = arrChessman[dstPos];
+
+    //再判断走棋后，自己是否被对方将军，如果自己被对方将军，则走法不合理
+    arrChessman[srcPos] = 0;
+    arrChessman[dstPos] = info.movingChessman;
+
+    if (!isAttackGeneral(arrChessman, isBlackSide(info.movingChessman) ? BLACK_GENERAL : RED_GENERAL))
+    {
+        info.move = MOVE(srcPos, dstPos);
+        info.killedChessman = killedChessman;
+        lstInfo.push_back(info);
+    }
+
+    arrChessman[srcPos] = info.movingChessman;
+    arrChessman[dstPos] = killedChessman;
+}
+
+void MoveGenerator::generateAllMove(char *arrChessman, int side, QList<MoveInfo> &lstInfo)
+{
+    MoveInfo info;
+    for (int i = FILE_LEFT; i <= FILE_RIGHT; ++i)
+    {
+        for (int j = RANK_TOP; j <= RANK_BOTTOM; ++j)
+        {
+            int index = COORD_XY(i, j);
+            if ((side == BLACK && isBlackSide(arrChessman[index])) ||
+                 (side == RED && isRedSide(arrChessman[index])))
+            {
+                info.move = index;
+                info.movingChessman = arrChessman[index];
+
+                switch (arrChessman[index])
+                {
+                case BLACK_GENERAL:
+                case RED_GENERAL:
+                    generateGeneralMove(arrChessman, index, info, lstInfo);
+                    break;
+                case BLACK_CHARIOT:
+                case RED_CHARIOT:
+                    generateChariotMove(arrChessman, index, info, lstInfo);
+                    break;
+                case BLACK_CANNON:
+                case RED_CANNON:
+                    generateCannonMove(arrChessman, index, info, lstInfo);
+                    break;
+                case BLACK_HORSE:
+                case RED_HORSE:
+                    generateHorseMove(arrChessman, index, info, lstInfo);
+                    break;
+                case BLACK_ADVISOR:
+                case RED_ADVISOR:
+                    generateAdvisorMove(arrChessman, index, info, lstInfo);
+                    break;
+                case BLACK_MINISTER:
+                case RED_MINISTER:
+                    generateMinisterMove(arrChessman, index, info, lstInfo);
+                    break;
+                case BLACK_SOLDIER:
+                case RED_SOLDIER:
+                    generateSoldierMove(arrChessman, index, info, lstInfo);
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+    }
+}
+
+void MoveGenerator::generateGeneralMove(char *arrChessman, int srcPos, MoveInfo &info, QList<MoveInfo> &lstInfo)
+{
+    int dstPos;
+    for (int i = 0; i < 4; ++i)
+    {
+        dstPos = srcPos + KingDelta[i];
+        if (validateGeneralMove(arrChessman, srcPos, dstPos))
+        {
+            addMoveRoute(arrChessman, srcPos, dstPos, info, lstInfo);
+        }
+    }
+}
+
+void MoveGenerator::generateAdvisorMove(char *arrChessman, int srcPos, MoveInfo &info, QList<MoveInfo> &lstInfo)
+{
+    int dstPos;
+    for (int i = 0; i < 4; ++i)
+    {
+        dstPos = srcPos + AdvisorDelta[i];
+        if (validateAdvisorMove(arrChessman, srcPos, dstPos))
+        {
+            addMoveRoute(arrChessman, srcPos, dstPos, info, lstInfo);
+        }
+    }
+}
+
+void MoveGenerator::generateMinisterMove(char *arrChessman, int srcPos, MoveInfo &info, QList<MoveInfo> &lstInfo)
+{
+    int dstPos;
+    for (int i = 0; i < 4; ++i)
+    {
+        dstPos = srcPos + 2 * AdvisorDelta[i];
+        if (validateMinisterMove(arrChessman, srcPos, dstPos))
+        {
+            addMoveRoute(arrChessman, srcPos, dstPos, info, lstInfo);
+        }
+    }
+}
+
+void MoveGenerator::generateHorseMove(char *arrChessman, int srcPos, MoveInfo &info, QList<MoveInfo> &lstInfo)
+{
+    int dstPos;
+    for (int i = 0; i < 4; ++i)
+    {
+        dstPos = srcPos + KingDelta[i];
+        if (arrChessman[dstPos] != 0)
+        {
+            continue;
+        }
+
+        for (int j = 0; j < 2; ++j)
+        {
+            dstPos = srcPos + KnightCheckDelta[i][j];
+            if (validateHorseMove(arrChessman, srcPos, dstPos))
+            {
+                addMoveRoute(arrChessman, srcPos, dstPos, info, lstInfo);
+            }
+        }
+    }
+}
+
+void MoveGenerator::generateChariotMove(char *arrChessman, int srcPos, MoveInfo &info, QList<MoveInfo> &lstInfo)
+{
+    int dstPos;
+    int column = FILE_X(srcPos);
+    int row = RANK_Y(srcPos);
+
+    for (int i = RANK_TOP; i <= RANK_BOTTOM; ++i)
+    {
+        if (i != row)
+        {
+            dstPos = COORD_XY(column, i);
+            if (validateChariotMove(arrChessman, srcPos, dstPos))
+            {
+                addMoveRoute(arrChessman, srcPos, dstPos, info, lstInfo);
+            }
+        }
+    }
+
+    for (int i = FILE_LEFT; i <= FILE_RIGHT; ++i)
+    {
+        if (i != column)
+        {
+            dstPos = COORD_XY(i, row);
+            if (validateChariotMove(arrChessman, srcPos, dstPos))
+            {
+                addMoveRoute(arrChessman, srcPos, dstPos, info, lstInfo);
+            }
+        }
+    }
+}
+
+void MoveGenerator::generateCannonMove(char *arrChessman, int srcPos, MoveInfo &info, QList<MoveInfo> &lstInfo)
+{
+    int dstPos;
+    int column = FILE_X(srcPos);
+    int row = RANK_Y(srcPos);
+
+    for (int i = RANK_TOP; i <= RANK_BOTTOM; ++i)
+    {
+        if (i != row)
+        {
+            dstPos = COORD_XY(column, i);
+            if (validateCannonMove(arrChessman, srcPos, dstPos))
+            {
+                addMoveRoute(arrChessman, srcPos, dstPos, info, lstInfo);
+            }
+        }
+    }
+
+    for (int i = FILE_LEFT; i <= FILE_RIGHT; ++i)
+    {
+        if (i != column)
+        {
+            dstPos = COORD_XY(i, row);
+            if (validateCannonMove(arrChessman, srcPos, dstPos))
+            {
+                addMoveRoute(arrChessman, srcPos, dstPos, info, lstInfo);
+            }
+        }
+    }
+}
+
+void MoveGenerator::generateSoldierMove(char *arrChessman, int srcPos, MoveInfo &info, QList<MoveInfo> &lstInfo)
+{
+    int dstPos = 0;
+    for (int i = 0; i < 4; ++i)
+    {
+        dstPos = srcPos + KingDelta[i];
+        if (validateSoldierMove(arrChessman, srcPos, dstPos))
+        {
+            addMoveRoute(arrChessman, srcPos, dstPos, info, lstInfo);
+        }
+    }
+}
+
 void MoveGenerator::getMoveStepAlpha(const char *arrChessman, int mv, QString &stepAlpha)
 {
     int fromPos = SRC(mv);

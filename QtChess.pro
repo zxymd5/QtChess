@@ -21,7 +21,8 @@ SOURCES += main.cpp \
     settingsdialog.cpp \
     rc4.cpp \
     zobrist.cpp \
-    movegenerator.cpp
+    movegenerator.cpp \
+    steptimerthread.cpp
 
 HEADERS  += \
     mainwindow.h \
@@ -33,7 +34,8 @@ HEADERS  += \
     settingsdialog.h \
     rc4.h \
     zobrist.h \
-    movegenerator.h
+    movegenerator.h \
+    steptimerthread.h
 
 FORMS    += \
     mainwindow.ui \

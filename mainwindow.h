@@ -1,12 +1,15 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QMainWindow>
 #include "chessboard.h"
 #include "steplist.h"
 #include "chesshandler.h"
 #include "settingsdialog.h"
 #include "gamesettings.h"
+#include "steptimerthread.h"
+#include <QMainWindow>
+#include <QMutex>
+#include <QWaitCondition>
 
 namespace Ui {
 class MainWindow;
@@ -23,13 +26,25 @@ public:
     void processUpdateMoveEvent();
     void processIllegalMoveEvent();
     void processFallbackEvent();
+    void processGameResultEvent();
     void playTipSound(const MoveInfo &info, int gameResult);
     void playGameResultSound(int gameResult);
     void addToStepList(const MoveInfo &info);
     void updateGeneralDisplay(int gameResult);
     void showResultView(int gameResult);
 
+    void displayStepTime(int interval);
+    bool isGameOver();
+    void setGameOver(bool gameOver);
+    void stepTimeOver();
+    void setStepInterval(int interval);
+    int getStepInterval();
+
     ~MainWindow();
+
+    QMutex stepTimeMutex;
+    QWaitCondition gameStartCond;
+    QWaitCondition stepOverCond;
 
 private slots:
     void startGame();
@@ -56,6 +71,8 @@ private:
     bool gameStarted;
     bool gameOver;
     MoveInfo lastMoveInfo;
+    int stepInterval;
+    StepTimerThread timerThread;
 };
 
 #endif // MAINWINDOW_H

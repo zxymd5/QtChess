@@ -29,11 +29,16 @@ public:
     bool redDoMove(int index);
     bool blackDoMove(int index);
     void applyMove();
+    void computerMove();
     void doMakeMove(MoveInfo &info, bool record = true);
     void undoMakeMove();
     void undoMakeMove(MoveInfo &info);
     int repStatus(int recur);
     int repValue(int repStatus);
+    void stepTimeOver();
+    int minMaxSearch(int depth, MoveInfo &info);
+    int evaluate();
+    bool isMySide();
 
     const MoveInfo &getCurrentMoveInfo();
     const QList<MoveInfo> &getLstMoveInfo();

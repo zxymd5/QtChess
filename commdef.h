@@ -62,6 +62,7 @@ static const int COMPITITOR_HUMAN = 2;
 static const int COMPITITOR_NETWORK = 3;
 static const int CLIENT_SIDE = 1;
 static const int SERVER_SIDE = 2;
+static const int MAX_SEARCH_DEPTH = 3;
 
 static const int CHESSMAN_TYPE_COUNT = 14;
 static const int CHESSBOARD_ROW = 10;
@@ -111,6 +112,7 @@ static const int EVENT_NEW_GAME = 1;
 static const int EVENT_UPDATE_MOVE = 2;
 static const int EVENT_ILLEGAL_MOVE = 3;
 static const int EVENT_FALLBACK = 4;
+static const int EVENT_GAME_RESULT = 5;
 
 // 判断棋子是否在棋盘中的数组
 static const char ccInBoard[256] = {
@@ -227,13 +229,13 @@ static const char ccKnightPin[512] = {
 };
 
 // 帅(将)的步长
-static const char ccKingDelta[4] = {-16, -1, 1, 16};
+static const char KingDelta[4] = {-16, -1, 1, 16};
 // 仕(士)的步长
-static const char ccAdvisorDelta[4] = {-17, -15, 15, 17};
+static const char AdvisorDelta[4] = {-17, -15, 15, 17};
 // 马的步长，以帅(将)的步长作为马腿
 static const char ccKnightDelta[4][2] = {{-33, -31}, {-18, 14}, {-14, 18}, {31, 33}};
 // 马被将军的步长，以仕(士)的步长作为马腿
-static const char ccKnightCheckDelta[4][2] = {{-33, -18}, {-31, -14}, {14, 31}, {18, 33}};
+static const char KnightCheckDelta[4][2] = {{-33, -18}, {-31, -14}, {14, 31}, {18, 33}};
 
 // 棋盘初始设置
 static const char STARTUP_LAYOUT[256] = {
@@ -650,6 +652,18 @@ static int getChessmanTypeByCode(QChar code)
     }
 
     return chessmanType;
+}
+
+static QString convertToTimeStr(int seconds)
+{
+    QString time;
+
+    int hour = seconds / 3600;
+    int minute = (seconds - hour * 3600) / 60;
+    int second = seconds - hour * 3600 - minute * 60;
+    time.sprintf("%.2d:%.2d:%.2d", hour, minute, second);
+
+    return time;
 }
 
 #endif // COMMDEF

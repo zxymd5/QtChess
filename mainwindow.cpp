@@ -6,10 +6,12 @@
 #include <QFile>
 #include <QFileDialog>
 #include <QTextStream>
+#include <unistd.h>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow)
+    ui(new Ui::MainWindow),
+    timerThread(this)
 {
     ui->setupUi(this);
     move(WINDOW_STARTX, WINDOW_STARTY);
@@ -21,6 +23,7 @@ MainWindow::MainWindow(QWidget *parent) :
     settingsDialog->setVisible(false);
     gameStarted = false;
     gameOver = false;
+    stepInterval = 0;
     lastMoveInfo.reset();
 
     initActions();
@@ -136,12 +139,12 @@ void MainWindow::fallback()
 
 void MainWindow::loseGame()
 {
-
+    chessHandler->loseGame();
 }
 
 void MainWindow::drawnGame()
 {
-
+    chessHandler->drawnGame();
 }
 
 void MainWindow::doMove(int index)
@@ -165,6 +168,9 @@ void MainWindow::processEvent(int event)
     case EVENT_FALLBACK:
         processFallbackEvent();
         break;
+    case EVENT_GAME_RESULT:
+        processGameResultEvent();
+        break;
     default:
         break;
     }
@@ -179,6 +185,13 @@ void MainWindow::processNewGameEvent()
     gameOver = false;
     gameStarted = true;
     lastMoveInfo.reset();
+
+    if (g_gameSettings.getStepTime() > 0)
+    {
+        timerThread.start();
+        usleep(50);
+        gameStartCond.wakeAll();
+    }
 }
 
 void MainWindow::processUpdateMoveEvent()
@@ -191,6 +204,10 @@ void MainWindow::processUpdateMoveEvent()
     {
         chessBoard->loadPixmap(chessHandler->getChessman());
         addToStepList(info);
+        if (gameResult == -1 && g_gameSettings.getStepTime() > 0)
+        {
+            stepOverCond.wakeAll();
+        }
     }
 
     if (isSameSide(lastMoveInfo.movingChessman, info.movingChessman))
@@ -228,6 +245,14 @@ void MainWindow::processFallbackEvent()
     lastMoveInfo = chessHandler->getCurrentMoveInfo();
     leftStepList->fallbackMoveHistory();
     rightStepList->fallbackMoveHistory();
+}
+
+void MainWindow::processGameResultEvent()
+{
+    int gameResult = chessHandler->getGameResult();
+    gameOver = gameResult != -1;
+    playGameResultSound(gameResult);
+    showResultView(gameResult);
 }
 
 void MainWindow::playTipSound(const MoveInfo &info, int gameResult)
@@ -327,5 +352,42 @@ void MainWindow::showResultView(int gameResult)
     default:
         break;
     }
+}
+
+void MainWindow::displayStepTime(int interval)
+{
+    if(ui->timeLeft)
+    {
+        ui->timeLeft->display(convertToTimeStr(interval));
+    }
+    if (ui->lblTurn)
+    {
+        ui->lblTurn->setText(chessHandler->getCurrentTurn() == BLACK ? tr("黑方走棋") : tr("红方走棋"));
+    }
+}
+
+bool MainWindow::isGameOver()
+{
+    return gameOver;
+}
+
+void MainWindow::setGameOver(bool isGameOver)
+{
+    gameOver = isGameOver;
+}
+
+void MainWindow::stepTimeOver()
+{
+    chessHandler->stepTimeOver();
+}
+
+void MainWindow::setStepInterval(int interval)
+{
+    stepInterval = interval;
+}
+
+int MainWindow::getStepInterval()
+{
+    return stepInterval;
 }
 
