@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui multimedia
+QT       += core gui multimedia network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -22,7 +22,9 @@ SOURCES += main.cpp \
     rc4.cpp \
     zobrist.cpp \
     movegenerator.cpp \
-    steptimerthread.cpp
+    steptimerthread.cpp \
+    servernetwork.cpp \
+    clientnetwork.cpp
 
 HEADERS  += \
     mainwindow.h \
@@ -35,7 +37,10 @@ HEADERS  += \
     rc4.h \
     zobrist.h \
     movegenerator.h \
-    steptimerthread.h
+    steptimerthread.h \
+    servernetwork.h \
+    clientnetwork.h \
+    networkmsgdef.h
 
 FORMS    += \
     mainwindow.ui \

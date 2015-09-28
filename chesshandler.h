@@ -5,6 +5,8 @@
 #include "rc4.h"
 #include "zobrist.h"
 #include "movegenerator.h"
+#include "servernetwork.h"
+#include "clientnetwork.h"
 #include <QObject>
 #include <QList>
 
@@ -51,10 +53,21 @@ public:
     void setCurrentTurn(int turn);
     void setChessman(const char *arrChessman);
 
+    void processReqGameInfoMsg(QString &msg, int len);
+    void processGameInfoMsg(QString &msg, int len);
+    void processNewGameMsg(QString &msg, int len);
+    void processChessboardSyncMsg(QString &msg, int len);
+    void processMoveInfoMsg(QString &msg, int len);
+    void processTipMsg(QString &msg, int len);
+    void processTipReplyMsg(QString &msg, int len);
+    void processDisconnectMsg(QString &msg, int len);
+    void sendMsg(char *msg, int len);
+
 signals:
     void refreshGame(int refreshType);
 
 public slots:
+    void processMessage(QString msg, int len);
 
 private:
     char arrChessman[256];
@@ -65,6 +78,8 @@ private:
     MoveGenerator moveGenerator;
     QList<MoveInfo> lstMoveInfo;
     MoveInfo currentMoveInfo;
+    ServerNetwork *server;
+    ClientNetwork *client;
 
     //子力值
     int blackValue;

@@ -24,6 +24,8 @@ MainWindow::MainWindow(QWidget *parent) :
     gameStarted = false;
     gameOver = false;
     stepInterval = 0;
+    tipType = 0;
+    tipResult = 0;
     lastMoveInfo.reset();
 
     initActions();
@@ -171,6 +173,16 @@ void MainWindow::processEvent(int event)
     case EVENT_GAME_RESULT:
         processGameResultEvent();
         break;
+    case EVENT_REQ_FALLBACK:
+    case EVENT_REQ_TIE:
+    case EVENT_REQ_LOSE:
+        processTipEvent(event);
+        break;
+    case EVENT_REQ_FALLBACK_REPLY:
+    case EVENT_REQ_LOSE_REPLY:
+    case EVENT_REQ_TIE_REPLY:
+        processTipReplyEvent(event);
+        break;
     default:
         break;
     }
@@ -226,7 +238,7 @@ void MainWindow::processUpdateMoveEvent()
             updateGeneralDisplay(gameResult);
         }
 
-        showResultView(gameResult);
+        showResult(gameResult);
     }
 
     lastMoveInfo = info;
@@ -252,7 +264,32 @@ void MainWindow::processGameResultEvent()
     int gameResult = chessHandler->getGameResult();
     gameOver = gameResult != -1;
     playGameResultSound(gameResult);
-    showResultView(gameResult);
+    showResult(gameResult);
+}
+
+void MainWindow::processTipEvent(int event)
+{
+    switch (event)
+    {
+    case EVENT_REQ_FALLBACK:
+        tipType = TIP_REQ_FALLBACK;
+        break;
+    case EVENT_REQ_LOSE:
+        tipType = TIP_REQ_LOSE;
+        break;
+    case EVENT_REQ_TIE:
+        tipType = TIP_REQ_TIE;
+        break;
+    default:
+        break;
+    }
+
+    showTip(tipType);
+}
+
+void MainWindow::processTipReplyEvent(int event)
+{
+
 }
 
 void MainWindow::playTipSound(const MoveInfo &info, int gameResult)
@@ -336,7 +373,7 @@ void MainWindow::updateGeneralDisplay(int gameResult)
     chessBoard->update();
 }
 
-void MainWindow::showResultView(int gameResult)
+void MainWindow::showResult(int gameResult)
 {
     switch (gameResult)
     {
@@ -351,6 +388,54 @@ void MainWindow::showResultView(int gameResult)
         break;
     default:
         break;
+    }
+}
+
+void MainWindow::showTip(int type)
+{
+    QString tipMsg;
+    switch(type)
+    {
+    case TIP_REQ_FALLBACK:
+        tipMsg = tr("对方请求\n悔棋，是否同意？");
+        break;
+    case TIP_REQ_TIE:
+        tipMsg = tr("对方请求\n和棋，是否同意？");
+        break;
+    case TIP_REQ_LOSE:
+        tipMsg = tr("对方请求\n认输，是否同意？");
+        break;
+    default:
+        break;
+    }
+
+    if (tipMsg.size())
+    {
+
+    }
+}
+
+void MainWindow::showTipReply(int type, int result)
+{
+    QString tipReplyMsg;
+    switch(type)
+    {
+    case TIP_REQ_FALLBACK:
+        tipReplyMsg = result == 1 ? tr("对方同意悔棋。") : tr("对方不同意悔棋。");
+        break;
+    case TIP_REQ_TIE:
+        tipReplyMsg = result == 1 ? tr("对方同意和棋。") : tr("对方不同意和棋。");
+        break;
+    case TIP_REQ_LOSE:
+        tipReplyMsg = result == 1 ? tr("对方同意认输。") : tr("对方不同意认输。");
+        break;
+    default:
+        break;
+    }
+
+    if (tipReplyMsg.size())
+    {
+
     }
 }
 

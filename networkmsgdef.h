@@ -1,0 +1,152 @@
+/*      
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  File:       NetworkMsgDef.h
+ *  Author:     Richard Zou
+ *  Created on: 2015-03-01
+ */
+
+#ifndef NETWORK_MSG_DEF_H
+#define NETWORK_MSG_DEF_H
+#include "commdef.h"
+
+const int MAX_MSG_SIZE = 1024;
+const int MSG_REQ_GAME_INFO = 1;
+const int MSG_GAME_INFO = 2;
+const int MSG_NEW_GAME = 3;
+const int MSG_CHESSBOARD_SYNC = 4;
+const int MSG_MOVE_INFO = 5;
+const int MSG_TIP = 6;
+const int MSG_TIP_REPLY = 7;
+const int MSG_DISCONNECT = 8;
+
+struct BaseNetworkMsg
+{
+    int msgID;
+
+    BaseNetworkMsg()
+    {
+        msgID = 0;
+    }
+};
+
+struct MsgReqGameInfo : public BaseNetworkMsg
+{
+    MsgReqGameInfo()
+    {
+        msgID = MSG_REQ_GAME_INFO;
+    }
+};
+
+struct MsgGameInfo : public BaseNetworkMsg
+{
+    int mySide;
+    int ahead;
+    int stepTime;
+    char arrChessman[256];
+
+    MsgGameInfo()
+    {
+        msgID = MSG_GAME_INFO;
+        mySide = 0;
+        ahead = 0;
+        stepTime = 0;
+        memset(arrChessman, 0, sizeof(arrChessman));
+    }
+};
+
+struct MsgNewGame : public BaseNetworkMsg
+{
+    char arrChessman[256];
+
+    MsgNewGame()
+    {
+        msgID = MSG_NEW_GAME;
+        memset(arrChessman, 0, sizeof(arrChessman));
+    }
+
+};
+
+struct MsgChessboardSync : public BaseNetworkMsg
+{
+    int currentTurn; 
+    int gameResult; 
+    int whoIsDead;
+    char arrChessman[256];
+
+    MsgChessboardSync()
+    {
+        msgID = MSG_CHESSBOARD_SYNC;
+        currentTurn = 0;
+        gameResult = -1;
+        whoIsDead = 0;
+        memset(arrChessman, 0, sizeof(arrChessman));
+    }
+};
+
+struct MsgTip : public BaseNetworkMsg
+{
+    int reqSide;
+    int tipType;
+
+    MsgTip()
+    {
+        msgID = MSG_TIP;
+        reqSide = 0;
+        tipType = 0;
+    }
+};
+
+struct MsgTipReply : public BaseNetworkMsg
+{
+    int reqSide;
+    int result;
+    int tipType;
+
+    MsgTipReply()
+    {
+        msgID = MSG_TIP_REPLY;
+        reqSide = 0;
+        result = 0;
+        tipType = 0;
+    }
+};
+
+struct MsgMoveInfo : public BaseNetworkMsg
+{
+    int currentTurn; 
+    int gameResult; 
+    int whoIsDead;
+    char arrChessman[256];
+    MoveInfo info;
+
+    MsgMoveInfo()
+    {
+        msgID = MSG_MOVE_INFO;
+        currentTurn = 0;
+        gameResult = -1;
+        whoIsDead = 0;
+        memset(arrChessman, 0, sizeof(arrChessman));
+    }
+};
+
+struct MsgDisconnect : public BaseNetworkMsg
+{
+    MsgDisconnect()
+    {
+        msgID = MSG_DISCONNECT;
+    }
+};
+
+#endif

@@ -1,20 +1,45 @@
 #include "chesshandler.h"
 #include "gamesettings.h"
+#include "networkmsgdef.h"
 #include <assert.h>
 
 ChessHandler::ChessHandler(QObject *parent) : QObject(parent)
 {
+    server = new ServerNetwork(this);
+    client = new ClientNetwork(this);
 
+    connect(server, SIGNAL(processMessage(QString,int)), this, SLOT(processMessage(QString,int)));
+    connect(client, SIGNAL(processMessage(QString,int)), this, SLOT(processMessage(QString,int)));
 }
 
 ChessHandler::~ChessHandler()
 {
+    if (server != NULL)
+    {
+        delete server;
+        server = NULL;
+    }
 
+    if (client != NULL)
+    {
+        delete client;
+        client = NULL;
+    }
 }
 
 void ChessHandler::startGame()
 {
-
+    if (g_gameSettings.getGameType() == COMPITITOR_NETWORK)
+    {
+        if (g_gameSettings.getServerOrClient() == SERVER_SIDE)
+        {
+            server->initServer(g_gameSettings.getPort());
+        }
+        else
+        {
+            client->initClient(g_gameSettings.getIpAddr(), g_gameSettings.getPort());
+        }
+    }
 }
 
 void ChessHandler::newGame()
@@ -575,3 +600,150 @@ void ChessHandler::setChessman(const char *chessman)
     memcpy(arrChessman, chessman, sizeof(arrChessman));
 }
 
+void ChessHandler::processReqGameInfoMsg(QString &msg, int len)
+{
+    assert(len == sizeof(MsgReqGameInfo));
+
+    MsgGameInfo networkMsg;
+    networkMsg.mySide = g_gameSettings.getCompetitorSide();
+    networkMsg.stepTime = g_gameSettings.getStepTime();
+    networkMsg.ahead = g_gameSettings.getAhead();
+    memcpy(networkMsg.arrChessman, arrChessman, sizeof(arrChessman));
+    sendMsg((char *)&networkMsg, sizeof(networkMsg));
+}
+
+void ChessHandler::processGameInfoMsg(QString &msg, int len)
+{
+    assert(len == sizeof(MsgGameInfo));
+    MsgGameInfo *netMsg = (MsgGameInfo *)(msg.toStdString().c_str());
+    g_gameSettings.setCompetitorSide(netMsg->mySide == BLACK ? RED : BLACK);
+    g_gameSettings.setAhead(netMsg->ahead);
+    g_gameSettings.setStepTime(netMsg->stepTime);
+
+    memcpy(arrChessman, netMsg->arrChessman, sizeof(arrChessman));
+}
+
+void ChessHandler::processNewGameMsg(QString &msg, int len)
+{
+    assert(len == sizeof(MsgNewGame));
+    newGame();
+}
+
+void ChessHandler::processChessboardSyncMsg(QString &msg, int len)
+{
+    assert(len == sizeof(MsgChessboardSync));
+    MsgChessboardSync *netMsg = (MsgChessboardSync *)(msg.toStdString().c_str());
+    messGame(netMsg->arrChessman, netMsg->currentTurn);
+}
+
+void ChessHandler::processMoveInfoMsg(QString &msg, int len)
+{
+    assert(len == sizeof(MsgMoveInfo));
+    MsgMoveInfo *netMsg = (MsgMoveInfo *)(msg.toStdString().c_str());
+    currentTurn = netMsg->currentTurn;
+    gameResult = netMsg->gameResult;
+    whoIsDead = netMsg->whoIsDead;
+    currentMoveInfo = netMsg->info;
+    memcpy(arrChessman, netMsg->arrChessman, sizeof(arrChessman));
+    if (SRC(currentMoveInfo.move) > 0 && DST(currentMoveInfo.move) > 0)
+    {
+        lstMoveInfo.push_back(currentMoveInfo);
+    }
+    emit refreshGame(EVENT_UPDATE_MOVE);
+    currentMoveInfo.reset();
+}
+
+void ChessHandler::processTipMsg(QString &msg, int len)
+{
+    assert(len == sizeof(MsgTip));
+    MsgTip *netMsg = (MsgTip *)(msg.toStdString().c_str());
+    switch (netMsg->tipType)
+    {
+    case TIP_REQ_FALLBACK:
+        emit refreshGame(EVENT_REQ_FALLBACK);
+        break;
+    case TIP_REQ_LOSE:
+        emit refreshGame(EVENT_REQ_LOSE);
+        break;
+    case TIP_REQ_TIE:
+        emit refreshGame(EVENT_REQ_TIE);
+        break;
+    default:
+        break;
+    }
+}
+
+void ChessHandler::processTipReplyMsg(QString &msg, int len)
+{
+    assert(len == sizeof(MsgTipReply));
+    MsgTipReply *netMsg = (MsgTipReply *)(msg.toStdString().c_str());
+    switch (netMsg->tipType)
+    {
+    case TIP_REQ_FALLBACK:
+        emit refreshGame(EVENT_REQ_FALLBACK_REPLY);
+        break;
+    case TIP_REQ_LOSE:
+        emit refreshGame(EVENT_REQ_LOSE_REPLY);
+        break;
+    case TIP_REQ_TIE:
+        emit refreshGame(EVENT_REQ_TIE_REPLY);
+        break;
+    default:
+        break;
+    }
+}
+
+void ChessHandler::processDisconnectMsg(QString &msg, int len)
+{
+    assert(len == sizeof(MsgDisconnect));
+    g_gameSettings.setGameType(COMPITITOR_HUMAN);
+    newGame();
+}
+
+void ChessHandler::sendMsg(char *msg, int len)
+{
+    if (g_gameSettings.getServerOrClient() == SERVER_SIDE)
+    {
+        server->sendMsg(msg, len);
+    }
+    else
+    {
+        client->sendMsg(msg, len);
+    }
+}
+
+void ChessHandler::processMessage(QString msg, int len)
+{
+    BaseNetworkMsg *networkMsg = (BaseNetworkMsg *)(msg.toStdString().c_str());
+
+    switch (networkMsg->msgID)
+    {
+    case MSG_REQ_GAME_INFO:
+        processReqGameInfoMsg(msg, len);
+        break;
+    case MSG_GAME_INFO:
+        processGameInfoMsg(msg, len);
+        break;
+    case MSG_NEW_GAME:
+        processNewGameMsg(msg, len);
+        break;
+    case MSG_CHESSBOARD_SYNC:
+        processChessboardSyncMsg(msg, len);
+        break;
+    case MSG_MOVE_INFO:
+        processMoveInfoMsg(msg, len);
+        break;
+    case MSG_TIP:
+        processTipMsg(msg, len);
+        break;
+    case MSG_TIP_REPLY:
+        processTipReplyMsg(msg, len);
+        break;
+    case MSG_DISCONNECT:
+        processDisconnectMsg(msg, len);
+        break;
+    default:
+        break;
+    }
+
+}

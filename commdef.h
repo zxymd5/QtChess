@@ -113,6 +113,16 @@ static const int EVENT_UPDATE_MOVE = 2;
 static const int EVENT_ILLEGAL_MOVE = 3;
 static const int EVENT_FALLBACK = 4;
 static const int EVENT_GAME_RESULT = 5;
+static const int EVENT_REQ_FALLBACK = 8;
+static const int EVENT_REQ_FALLBACK_REPLY = 9;
+static const int EVENT_REQ_TIE = 10;
+static const int EVENT_REQ_TIE_REPLY = 11;
+static const int EVENT_REQ_LOSE = 12;
+static const int EVENT_REQ_LOSE_REPLY = 13;
+
+static const int TIP_REQ_FALLBACK = 1;
+static const int TIP_REQ_TIE = 2;
+static const int TIP_REQ_LOSE = 3;
 
 // 判断棋子是否在棋盘中的数组
 static const char ccInBoard[256] = {
@@ -229,13 +239,13 @@ static const char ccKnightPin[512] = {
 };
 
 // 帅(将)的步长
-static const char KingDelta[4] = {-16, -1, 1, 16};
+static const char kingDelta[4] = {-16, -1, 1, 16};
 // 仕(士)的步长
-static const char AdvisorDelta[4] = {-17, -15, 15, 17};
+static const char advisorDelta[4] = {-17, -15, 15, 17};
 // 马的步长，以帅(将)的步长作为马腿
-static const char ccKnightDelta[4][2] = {{-33, -31}, {-18, 14}, {-14, 18}, {31, 33}};
+static const char knightDelta[4][2] = {{-33, -31}, {-18, 14}, {-14, 18}, {31, 33}};
 // 马被将军的步长，以仕(士)的步长作为马腿
-static const char KnightCheckDelta[4][2] = {{-33, -18}, {-31, -14}, {14, 31}, {18, 33}};
+static const char knightCheckDelta[4][2] = {{-33, -18}, {-31, -14}, {14, 31}, {18, 33}};
 
 // 棋盘初始设置
 static const char STARTUP_LAYOUT[256] = {

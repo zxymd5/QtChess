@@ -27,11 +27,15 @@ public:
     void processIllegalMoveEvent();
     void processFallbackEvent();
     void processGameResultEvent();
+    void processTipEvent(int event);
+    void processTipReplyEvent(int event);
     void playTipSound(const MoveInfo &info, int gameResult);
     void playGameResultSound(int gameResult);
     void addToStepList(const MoveInfo &info);
     void updateGeneralDisplay(int gameResult);
-    void showResultView(int gameResult);
+    void showResult(int gameResult);
+    void showTip(int type);
+    void showTipReply(int type, int result);
 
     void displayStepTime(int interval);
     bool isGameOver();
@@ -73,6 +77,8 @@ private:
     MoveInfo lastMoveInfo;
     int stepInterval;
     StepTimerThread timerThread;
+    int tipType;
+    int tipResult;
 };
 
 #endif // MAINWINDOW_H
