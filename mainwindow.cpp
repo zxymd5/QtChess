@@ -84,7 +84,10 @@ void MainWindow::startGame()
 void MainWindow::newGame()
 {
     chessHandler->newGame();
-    QSound::play(AUDIO_NEW_GAME);
+    if (g_gameSettings.getGameType() == COMPITITOR_NETWORK)
+    {
+        chessHandler->sendNewGameMsg();
+    }
 }
 
 void MainWindow::settings()
@@ -202,6 +205,11 @@ void MainWindow::about()
 
 void MainWindow::doMove(int index)
 {
+    if (chessHandler->getCurrentTurn() == g_gameSettings.getCompetitorSide() &&
+        g_gameSettings.getGameType() != COMPITITOR_HUMAN)
+    {
+        return;
+    }
 
     if (chessHandler->getGameResult() == -1)
     {
@@ -252,11 +260,12 @@ void MainWindow::processNewGameEvent()
     gameOver = false;
     gameStarted = true;
     lastMoveInfo.reset();
+    QSound::play(AUDIO_NEW_GAME);
 
     if (g_gameSettings.getStepTime() > 0)
     {
         timerThread.start();
-        usleep(50);
+        usleep(500);
         gameStartCond.wakeAll();
     }
 }
@@ -526,11 +535,11 @@ void MainWindow::showTipReply(int type, int result)
 
 void MainWindow::displayStepTime(int interval)
 {
-    if(ui->timeLeft)
+    if(ui && ui->timeLeft)
     {
         ui->timeLeft->display(convertToTimeStr(interval));
     }
-    if (ui->lblTurn)
+    if (ui && ui->lblTurn)
     {
         ui->lblTurn->setText(chessHandler->getCurrentTurn() == BLACK ? tr("黑方走棋") : tr("红方走棋"));
     }

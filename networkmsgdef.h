@@ -128,7 +128,12 @@ struct MsgMoveInfo : public BaseNetworkMsg
     int gameResult; 
     int whoIsDead;
     char arrChessman[256];
-    MoveInfo info;
+    char killedChessman;
+    char movingChessman;
+    bool attackGeneral;
+    int move;
+    char moveStepAlpha[10];
+    unsigned long zobristKey;
 
     MsgMoveInfo()
     {
@@ -137,6 +142,12 @@ struct MsgMoveInfo : public BaseNetworkMsg
         gameResult = -1;
         whoIsDead = 0;
         memset(arrChessman, 0, sizeof(arrChessman));
+        killedChessman = 0;
+        movingChessman = 0;
+        attackGeneral = false;
+        move = 0;
+        memset(moveStepAlpha, 0, sizeof(moveStepAlpha));
+        zobristKey = 0;
     }
 };
 

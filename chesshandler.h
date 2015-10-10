@@ -55,23 +55,24 @@ public:
     int getReplyResult();
     void setReplyResult(int result);
 
-    void processReqGameInfoMsg(QString &msg, int len);
-    void processGameInfoMsg(QString &msg, int len);
-    void processNewGameMsg(QString &msg, int len);
-    void processChessboardSyncMsg(QString &msg, int len);
-    void processMoveInfoMsg(QString &msg, int len);
-    void processTipMsg(QString &msg, int len);
-    void processTipReplyMsg(QString &msg, int len);
+    void processReqGameInfoMsg(char *msg, int len);
+    void processGameInfoMsg(char *msg, int len);
+    void processNewGameMsg(char *msg, int len);
+    void processChessboardSyncMsg(char *msg, int len);
+    void processMoveInfoMsg(char *msg, int len);
+    void processTipMsg(char *msg, int len);
+    void processTipReplyMsg(char *msg, int len);
     void sendMsg(char *msg, int len);
     void sendTipMsg(int tipType);
     void sendTipReplyMsg(int tipType, int result);
     void sendMoveInfoMsg();
+    void sendNewGameMsg();
 
 signals:
     void refreshGame(int refreshType);
 
 public slots:
-    void processMessage(QString msg, int len);
+    void processMessage(char *msg, int len);
     void connStateChanged(bool status);
 
 private:

@@ -26,6 +26,7 @@ struct MoveInfo
     {
         reset();
     }
+
 };
 
 struct ChineseMoveStep

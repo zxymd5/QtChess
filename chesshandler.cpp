@@ -9,8 +9,8 @@ ChessHandler::ChessHandler(QObject *parent) : QObject(parent)
     server = new ServerNetwork(this);
     client = new ClientNetwork(this);
 
-    connect(server, SIGNAL(processMessage(QString,int)), this, SLOT(processMessage(QString,int)));
-    connect(client, SIGNAL(processMessage(QString,int)), this, SLOT(processMessage(QString,int)));
+    connect(server, SIGNAL(processMessage(char *,int)), this, SLOT(processMessage(char *,int)));
+    connect(client, SIGNAL(processMessage(char *,int)), this, SLOT(processMessage(char *,int)));
     connect(server, SIGNAL(connStateChanged(bool)), this, SLOT(connStateChanged(bool)));
     connect(client, SIGNAL(connStateChanged(bool)), this, SLOT(connStateChanged(bool)));
 }
@@ -371,6 +371,10 @@ void ChessHandler::applyMove()
     }
 
     //发送网络消息
+    if (g_gameSettings.getGameType() == COMPITITOR_NETWORK)
+    {
+        sendMoveInfoMsg();
+    }
 
     emit refreshGame(EVENT_UPDATE_MOVE);
     currentMoveInfo.reset();
@@ -617,7 +621,7 @@ void ChessHandler::setReplyResult(int result)
     replyResult = result;
 }
 
-void ChessHandler::processReqGameInfoMsg(QString &msg, int len)
+void ChessHandler::processReqGameInfoMsg(char *msg, int len)
 {
     Q_UNUSED(msg);
     assert(len == sizeof(MsgReqGameInfo));
@@ -630,10 +634,10 @@ void ChessHandler::processReqGameInfoMsg(QString &msg, int len)
     sendMsg((char *)&networkMsg, sizeof(networkMsg));
 }
 
-void ChessHandler::processGameInfoMsg(QString &msg, int len)
+void ChessHandler::processGameInfoMsg(char *msg, int len)
 {
     assert(len == sizeof(MsgGameInfo));
-    MsgGameInfo *netMsg = (MsgGameInfo *)(msg.toStdString().c_str());
+    MsgGameInfo *netMsg = (MsgGameInfo *)msg;
     g_gameSettings.setCompetitorSide(netMsg->mySide == BLACK ? RED : BLACK);
     g_gameSettings.setAhead(netMsg->ahead);
     g_gameSettings.setStepTime(netMsg->stepTime);
@@ -641,28 +645,37 @@ void ChessHandler::processGameInfoMsg(QString &msg, int len)
     memcpy(arrChessman, netMsg->arrChessman, sizeof(arrChessman));
 }
 
-void ChessHandler::processNewGameMsg(QString &msg, int len)
+void ChessHandler::processNewGameMsg(char *msg, int len)
 {
     Q_UNUSED(msg);
     assert(len == sizeof(MsgNewGame));
     newGame();
 }
 
-void ChessHandler::processChessboardSyncMsg(QString &msg, int len)
+void ChessHandler::processChessboardSyncMsg(char *msg, int len)
 {
     assert(len == sizeof(MsgChessboardSync));
-    MsgChessboardSync *netMsg = (MsgChessboardSync *)(msg.toStdString().c_str());
+    MsgChessboardSync *netMsg = (MsgChessboardSync *)msg;
     messGame(netMsg->arrChessman, netMsg->currentTurn);
 }
 
-void ChessHandler::processMoveInfoMsg(QString &msg, int len)
+void ChessHandler::processMoveInfoMsg(char *msg, int len)
 {
     assert(len == sizeof(MsgMoveInfo));
-    MsgMoveInfo *netMsg = (MsgMoveInfo *)(msg.toStdString().c_str());
+    MsgMoveInfo *netMsg = (MsgMoveInfo *)msg;
     currentTurn = netMsg->currentTurn;
     gameResult = netMsg->gameResult;
     whoIsDead = netMsg->whoIsDead;
-    currentMoveInfo = netMsg->info;
+    currentMoveInfo.killedChessman = netMsg->killedChessman;
+    currentMoveInfo.movingChessman = netMsg->movingChessman;
+    currentMoveInfo.attackGeneral = netMsg->attackGeneral;
+    currentMoveInfo.move = netMsg->move;
+    if (strlen(netMsg->moveStepAlpha) > 0)
+    {
+        currentMoveInfo.moveStepAlpha = netMsg->moveStepAlpha;
+    }
+    currentMoveInfo.zobristKey = netMsg->zobristKey;
+
     memcpy(arrChessman, netMsg->arrChessman, sizeof(arrChessman));
     if (SRC(currentMoveInfo.move) > 0 && DST(currentMoveInfo.move) > 0)
     {
@@ -672,10 +685,10 @@ void ChessHandler::processMoveInfoMsg(QString &msg, int len)
     currentMoveInfo.reset();
 }
 
-void ChessHandler::processTipMsg(QString &msg, int len)
+void ChessHandler::processTipMsg(char *msg, int len)
 {
     assert(len == sizeof(MsgTip));
-    MsgTip *netMsg = (MsgTip *)(msg.toStdString().c_str());
+    MsgTip *netMsg = (MsgTip *)msg;
     switch (netMsg->tipType)
     {
     case TIP_REQ_FALLBACK:
@@ -692,10 +705,10 @@ void ChessHandler::processTipMsg(QString &msg, int len)
     }
 }
 
-void ChessHandler::processTipReplyMsg(QString &msg, int len)
+void ChessHandler::processTipReplyMsg(char *msg, int len)
 {
     assert(len == sizeof(MsgTipReply));
-    MsgTipReply *netMsg = (MsgTipReply *)(msg.toStdString().c_str());
+    MsgTipReply *netMsg = (MsgTipReply *)msg;
     replyResult = netMsg->result;
     switch (netMsg->tipType)
     {
@@ -750,13 +763,28 @@ void ChessHandler::sendMoveInfoMsg()
     msg.gameResult = gameResult;
     msg.whoIsDead = whoIsDead;
     memcpy(msg.arrChessman, arrChessman, sizeof(arrChessman));
-    msg.info = currentMoveInfo;
+    msg.killedChessman = currentMoveInfo.killedChessman;
+    msg.movingChessman = currentMoveInfo.movingChessman;
+    msg.attackGeneral = currentMoveInfo.attackGeneral;
+    msg.move = currentMoveInfo.move;
+    if (currentMoveInfo.moveStepAlpha.size() > 0)
+    {
+        strcpy(msg.moveStepAlpha, currentMoveInfo.moveStepAlpha.toStdString().c_str());
+    }
+    msg.zobristKey = currentMoveInfo.zobristKey;
     sendMsg((char *)&msg, sizeof(msg));
 }
 
-void ChessHandler::processMessage(QString msg, int len)
+void ChessHandler::sendNewGameMsg()
 {
-    BaseNetworkMsg *networkMsg = (BaseNetworkMsg *)(msg.toStdString().c_str());
+    MsgNewGame msg;
+    memcpy(msg.arrChessman, STARTUP_LAYOUT, sizeof(msg.arrChessman));
+    sendMsg((char *)&msg, sizeof(msg));
+}
+
+void ChessHandler::processMessage(char *msg, int len)
+{
+    BaseNetworkMsg *networkMsg = (BaseNetworkMsg *)msg;
 
     switch (networkMsg->msgID)
     {

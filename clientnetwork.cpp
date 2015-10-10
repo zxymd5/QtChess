@@ -58,13 +58,16 @@ void ClientNetwork::readData()
     qDebug() << "readData";
     QByteArray data;
     QString strData;
-    while (clientSocket->bytesAvailable()) {
-        data = clientSocket->readLine();
-        strData.append(data);
-    }
+    char msg[1024];
+    memset(msg, 0, 1024);
+    int len = clientSocket->read(msg, 1024);
+//    while (clientSocket->bytesAvailable()) {
+//        data = clientSocket->readLine();
+//        strData.append(data);
+//    }
 
-    qDebug() << strData;
-    emit processMessage(strData, strData.length());
+//    qDebug() << strData;
+    emit processMessage(msg, len);
 }
 
 void ClientNetwork::displayError(QAbstractSocket::SocketError err)

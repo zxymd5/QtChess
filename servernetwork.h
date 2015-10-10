@@ -16,7 +16,7 @@ public:
     int sendMsg(char *msg, int len);
 
 signals:
-    void processMessage(QString msg, int len);
+    void processMessage(char *msg, int len);
     void connStateChanged(bool);
 
 public slots:

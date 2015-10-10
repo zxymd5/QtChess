@@ -63,12 +63,16 @@ void ServerNetwork::readData()
      QByteArray data;
      QString strData;
 
-    while (serverSocket->bytesAvailable()) {
-        data = serverSocket->readLine();
-        strData.append(data);
-    }
+     char msg[1024];
+     memset(msg, 0, 1024);
 
-    emit processMessage(strData, strData.length());
+//    while (serverSocket->bytesAvailable()) {
+//        data = serverSocket->readLine();
+//        strData.append(data);
+//    }
+     int len = serverSocket->read(msg, 1024);
+
+    emit processMessage(msg, len);
 //    qDebug() << "ReadData:" << strData;
 //    serverSocket->write(strData.toLatin1(), strData.length());
 }
