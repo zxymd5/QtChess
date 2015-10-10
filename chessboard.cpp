@@ -18,6 +18,7 @@ ChessBoard::~ChessBoard()
 
 void ChessBoard::paintEvent(QPaintEvent *event)
 {
+    Q_UNUSED(event);
     int xx = 0;
     int yy = 0;
     int index = 0;

@@ -6,10 +6,12 @@
 #include <QFile>
 #include <QFileDialog>
 #include <QTextStream>
+#include <unistd.h>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow)
+    ui(new Ui::MainWindow),
+    timerThread(this)
 {
     ui->setupUi(this);
     move(WINDOW_STARTX, WINDOW_STARTY);
@@ -21,6 +23,8 @@ MainWindow::MainWindow(QWidget *parent) :
     settingsDialog->setVisible(false);
     gameStarted = false;
     gameOver = false;
+    stepInterval = 0;
+    tipType = 0;
     lastMoveInfo.reset();
 
     initActions();
@@ -33,22 +37,46 @@ void MainWindow::initActions()
     connect(ui->actionFlip, SIGNAL(triggered()), this, SLOT(flipChessBoard()));
     connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(save()));
     connect(ui->actionOpen, SIGNAL(triggered()), this, SLOT(open()));
+    connect(ui->actionUndo, SIGNAL(triggered()), this, SLOT(fallback()));
+    connect(ui->actionLose, SIGNAL(triggered()), this, SLOT(loseGame()));
+    connect(ui->actionTie, SIGNAL(triggered()), this, SLOT(drawnGame()));
+    connect(ui->actionSettings, SIGNAL(triggered()), this, SLOT(settings()));
+    connect(ui->actionAbout, SIGNAL(triggered()), this, SLOT(about()));
     connect(chessBoard, SIGNAL(doMove(int)), this, SLOT(doMove(int)));
     connect(chessHandler, SIGNAL(refreshGame(int)), this, SLOT(processEvent(int)));
 }
 
 MainWindow::~MainWindow()
 {
-    delete chessBoard;
-    delete leftStepList;
-    delete rightStepList;
-    delete chessHandler;
-    delete ui;
+    if (chessBoard != NULL)
+    {
+        delete chessBoard;
+        chessBoard = NULL;
+    }
+    if (leftStepList != NULL)
+    {
+        delete leftStepList;
+        leftStepList = NULL;
+    }
+    if (rightStepList != NULL)
+    {
+        delete rightStepList;
+        rightStepList = NULL;
+    }
+    if (chessHandler != NULL)
+    {
+        delete chessHandler;
+        chessHandler = NULL;
+    }
+    if (ui != NULL)
+    {
+        delete ui;
+        ui = NULL;
+    }
 }
 
 void MainWindow::startGame()
 {
-    settingsDialog->updateDialog();
     settings();
     chessHandler->startGame();
 }
@@ -61,6 +89,7 @@ void MainWindow::newGame()
 
 void MainWindow::settings()
 {
+    settingsDialog->updateDialog();
     if(settingsDialog->isVisible())
     {
         settingsDialog->activateWindow();
@@ -126,9 +155,58 @@ void MainWindow::open()
     chessHandler->messGame(arrChessman, currentTurn);
 }
 
+void MainWindow::fallback()
+{
+    if (g_gameSettings.getGameType() == COMPITITOR_NETWORK)
+    {
+        chessHandler->sendTipMsg(TIP_REQ_FALLBACK);
+        tipType = TIP_REQ_FALLBACK;
+    }
+    else
+    {
+        chessHandler->fallback();
+    }
+
+}
+
+void MainWindow::loseGame()
+{
+    if (g_gameSettings.getGameType() == COMPITITOR_NETWORK)
+    {
+        chessHandler->sendTipMsg(TIP_REQ_LOSE);
+        tipType = TIP_REQ_LOSE;
+    }
+    else
+    {
+        chessHandler->loseGame();
+    }
+}
+
+void MainWindow::drawnGame()
+{
+    if (g_gameSettings.getGameType() == COMPITITOR_NETWORK)
+    {
+        chessHandler->sendTipMsg(TIP_REQ_TIE);
+        tipType = TIP_REQ_TIE;
+    }
+    else
+    {
+        chessHandler->drawnGame();
+    }
+}
+
+void MainWindow::about()
+{
+    QMessageBox::about(NULL, tr("关于本软件"), tr("Chinese Chess Version 1.0.0 by Richard Zou"));
+}
+
 void MainWindow::doMove(int index)
 {
-    chessHandler->doMove(index);
+
+    if (chessHandler->getGameResult() == -1)
+    {
+        chessHandler->doMove(index);
+    }
 }
 
 void MainWindow::processEvent(int event)
@@ -144,6 +222,22 @@ void MainWindow::processEvent(int event)
     case EVENT_ILLEGAL_MOVE:
         processIllegalMoveEvent();
         break;
+    case EVENT_FALLBACK:
+        processFallbackEvent();
+        break;
+    case EVENT_GAME_RESULT:
+        processGameResultEvent();
+        break;
+    case EVENT_REQ_FALLBACK:
+    case EVENT_REQ_TIE:
+    case EVENT_REQ_LOSE:
+        processTipEvent(event);
+        break;
+    case EVENT_REQ_FALLBACK_REPLY:
+    case EVENT_REQ_LOSE_REPLY:
+    case EVENT_REQ_TIE_REPLY:
+        processTipReplyEvent(event);
+        break;
     default:
         break;
     }
@@ -158,6 +252,13 @@ void MainWindow::processNewGameEvent()
     gameOver = false;
     gameStarted = true;
     lastMoveInfo.reset();
+
+    if (g_gameSettings.getStepTime() > 0)
+    {
+        timerThread.start();
+        usleep(50);
+        gameStartCond.wakeAll();
+    }
 }
 
 void MainWindow::processUpdateMoveEvent()
@@ -170,6 +271,10 @@ void MainWindow::processUpdateMoveEvent()
     {
         chessBoard->loadPixmap(chessHandler->getChessman());
         addToStepList(info);
+        if (gameResult == -1 && g_gameSettings.getStepTime() > 0)
+        {
+            stepOverCond.wakeAll();
+        }
     }
 
     if (isSameSide(lastMoveInfo.movingChessman, info.movingChessman))
@@ -188,7 +293,7 @@ void MainWindow::processUpdateMoveEvent()
             updateGeneralDisplay(gameResult);
         }
 
-        showResultView(gameResult);
+        showResult(gameResult);
     }
 
     lastMoveInfo = info;
@@ -198,6 +303,69 @@ void MainWindow::processUpdateMoveEvent()
 void MainWindow::processIllegalMoveEvent()
 {
     QSound::play(AUDIO_ILLEGAL);
+}
+
+void MainWindow::processFallbackEvent()
+{
+    chessBoard->loadPixmap(chessHandler->getChessman());
+    chessBoard->update();
+    lastMoveInfo.reset();
+    leftStepList->fallbackMoveHistory();
+    rightStepList->fallbackMoveHistory();
+
+    if (chessHandler->getGameResult() == -1 && g_gameSettings.getStepTime() > 0)
+    {
+        stepOverCond.wakeAll();
+    }
+}
+
+void MainWindow::processGameResultEvent()
+{
+    int gameResult = chessHandler->getGameResult();
+    gameOver = gameResult != -1;
+    playGameResultSound(gameResult);
+    showResult(gameResult);
+}
+
+void MainWindow::processTipEvent(int event)
+{
+    switch (event)
+    {
+    case EVENT_REQ_FALLBACK:
+        tipType = TIP_REQ_FALLBACK;
+        break;
+    case EVENT_REQ_LOSE:
+        tipType = TIP_REQ_LOSE;
+        break;
+    case EVENT_REQ_TIE:
+        tipType = TIP_REQ_TIE;
+        break;
+    default:
+        break;
+    }
+
+    showTip(tipType);
+}
+
+void MainWindow::processTipReplyEvent(int event)
+{
+    switch (event)
+    {
+    case EVENT_REQ_FALLBACK_REPLY:
+        tipType = TIP_REQ_FALLBACK;
+        break;
+    case EVENT_REQ_LOSE_REPLY:
+        tipType = TIP_REQ_LOSE;
+        break;
+    case EVENT_REQ_TIE_REPLY:
+        tipType = TIP_REQ_TIE;
+        break;
+    default:
+        break;
+    }
+
+    showTipReply(tipType, chessHandler->getReplyResult());
+    chessHandler->setReplyResult(0);
 }
 
 void MainWindow::playTipSound(const MoveInfo &info, int gameResult)
@@ -281,7 +449,7 @@ void MainWindow::updateGeneralDisplay(int gameResult)
     chessBoard->update();
 }
 
-void MainWindow::showResultView(int gameResult)
+void MainWindow::showResult(int gameResult)
 {
     switch (gameResult)
     {
@@ -297,5 +465,99 @@ void MainWindow::showResultView(int gameResult)
     default:
         break;
     }
+}
+
+void MainWindow::showTip(int type)
+{
+    QString tipMsg;
+    switch(type)
+    {
+    case TIP_REQ_FALLBACK:
+        tipMsg = tr("对方请求\n悔棋，是否同意？");
+        break;
+    case TIP_REQ_TIE:
+        tipMsg = tr("对方请求\n和棋，是否同意？");
+        break;
+    case TIP_REQ_LOSE:
+        tipMsg = tr("对方请求\n认输，是否同意？");
+        break;
+    default:
+        break;
+    }
+    tipType = type;
+
+    if (tipMsg.size())
+    {
+        QMessageBox msgBox;
+        msgBox.setText(tipMsg);
+        msgBox.setInformativeText(tr("是否同意？"));
+        msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Discard);
+        msgBox.setButtonText(QMessageBox::Ok, tr("同意"));
+        msgBox.setButtonText(QMessageBox::Discard, tr("不同意"));
+
+        int result = msgBox.exec() == QMessageBox::Ok ? 1 : 0;
+        chessHandler->sendTipReplyMsg(tipType, result);
+    }
+}
+
+void MainWindow::showTipReply(int type, int result)
+{
+    QString tipReplyMsg;
+    switch(type)
+    {
+    case TIP_REQ_FALLBACK:
+        tipReplyMsg = result == 1 ? tr("对方同意悔棋。") : tr("对方不同意悔棋。");
+        break;
+    case TIP_REQ_TIE:
+        tipReplyMsg = result == 1 ? tr("对方同意和棋。") : tr("对方不同意和棋。");
+        break;
+    case TIP_REQ_LOSE:
+        tipReplyMsg = result == 1 ? tr("对方同意认输。") : tr("对方不同意认输。");
+        break;
+    default:
+        break;
+    }
+
+    if (tipReplyMsg.size())
+    {
+        QMessageBox::about(NULL, tr("提示信息"), tipReplyMsg);
+    }
+}
+
+void MainWindow::displayStepTime(int interval)
+{
+    if(ui->timeLeft)
+    {
+        ui->timeLeft->display(convertToTimeStr(interval));
+    }
+    if (ui->lblTurn)
+    {
+        ui->lblTurn->setText(chessHandler->getCurrentTurn() == BLACK ? tr("黑方走棋") : tr("红方走棋"));
+    }
+}
+
+bool MainWindow::isGameOver()
+{
+    return gameOver;
+}
+
+void MainWindow::setGameOver(bool isGameOver)
+{
+    gameOver = isGameOver;
+}
+
+void MainWindow::stepTimeOver()
+{
+    chessHandler->stepTimeOver();
+}
+
+void MainWindow::setStepInterval(int interval)
+{
+    stepInterval = interval;
+}
+
+int MainWindow::getStepInterval()
+{
+    return stepInterval;
 }
 

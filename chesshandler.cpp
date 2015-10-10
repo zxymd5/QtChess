@@ -1,20 +1,48 @@
 #include "chesshandler.h"
 #include "gamesettings.h"
+#include "networkmsgdef.h"
 #include <assert.h>
+#include <QMessageBox>
 
 ChessHandler::ChessHandler(QObject *parent) : QObject(parent)
 {
+    server = new ServerNetwork(this);
+    client = new ClientNetwork(this);
 
+    connect(server, SIGNAL(processMessage(QString,int)), this, SLOT(processMessage(QString,int)));
+    connect(client, SIGNAL(processMessage(QString,int)), this, SLOT(processMessage(QString,int)));
+    connect(server, SIGNAL(connStateChanged(bool)), this, SLOT(connStateChanged(bool)));
+    connect(client, SIGNAL(connStateChanged(bool)), this, SLOT(connStateChanged(bool)));
 }
 
 ChessHandler::~ChessHandler()
 {
+    if (server != NULL)
+    {
+        delete server;
+        server = NULL;
+    }
 
+    if (client != NULL)
+    {
+        delete client;
+        client = NULL;
+    }
 }
 
 void ChessHandler::startGame()
 {
-
+    if (g_gameSettings.getGameType() == COMPITITOR_NETWORK)
+    {
+        if (g_gameSettings.getServerOrClient() == SERVER_SIDE)
+        {
+            server->initServer(g_gameSettings.getPort());
+        }
+        else
+        {
+            client->initClient(g_gameSettings.getIpAddr(), g_gameSettings.getPort());
+        }
+    }
 }
 
 void ChessHandler::newGame()
@@ -35,6 +63,42 @@ void ChessHandler::messGame(const char *chessman, int turn)
     emit refreshGame(EVENT_NEW_GAME);
 }
 
+void ChessHandler::fallback()
+{
+    if (lstMoveInfo.size() > 0)
+    {
+        if (lstMoveInfo.size() == 1)
+        {
+            undoMakeMove();
+        }
+        else
+        {
+            undoMakeMove();
+            undoMakeMove();
+        }
+        emit refreshGame(EVENT_FALLBACK);
+        currentMoveInfo.reset();
+    }
+}
+
+void ChessHandler::loseGame()
+{
+    if (gameResult == -1)
+    {
+        gameResult = g_gameSettings.getCompetitorSide();
+        emit refreshGame(EVENT_GAME_RESULT);
+    }
+}
+
+void ChessHandler::drawnGame()
+{
+    if (gameResult == -1)
+    {
+        gameResult = TIE;
+        emit refreshGame(EVENT_GAME_RESULT);
+    }
+}
+
 void ChessHandler::reset(int turn)
 {
     currentTurn = turn;
@@ -45,6 +109,7 @@ void ChessHandler::reset(int turn)
     blackValue = 0;
     redValue = 0;
     memset(arrChessman, 0, sizeof(arrChessman));
+    replyResult = 0;
 }
 
 void ChessHandler::resetZobrist()
@@ -128,14 +193,21 @@ void ChessHandler::doMove(int index)
         {
             applyMove();
 
-            //电脑走棋
+            if (g_gameSettings.getGameType() == COMPITITOR_MACHINE)
+            {
+                //电脑走棋
+                computerMove();
+            }
         }
         else
         {
-            emit refreshGame(EVENT_UPDATE_MOVE);
-
             //发送网络消息
+            if (g_gameSettings.getGameType() == COMPITITOR_NETWORK)
+            {
+                sendMoveInfoMsg();
+            }
 
+            emit refreshGame(EVENT_UPDATE_MOVE);
         }
     }
     else
@@ -304,6 +376,13 @@ void ChessHandler::applyMove()
     currentMoveInfo.reset();
 }
 
+void ChessHandler::computerMove()
+{
+    minMaxSearch(MAX_SEARCH_DEPTH, currentMoveInfo);
+    moveGenerator.getMoveStepAlpha(arrChessman, currentMoveInfo.move, currentMoveInfo.moveStepAlpha);
+    applyMove();
+}
+
 void ChessHandler::doMakeMove(MoveInfo &info, bool record)
 {
     int fromPos = SRC(info.move);
@@ -327,6 +406,41 @@ void ChessHandler::doMakeMove(MoveInfo &info, bool record)
     }
     currentSearchMoveTurn = currentSearchMoveTurn == BLACK ? RED : BLACK;
 
+    currentZobrist.Xor(initZobrist);
+}
+
+void ChessHandler::undoMakeMove()
+{
+    MoveInfo info = lstMoveInfo.back();
+
+    delChessman(DST(info.move), info.movingChessman);
+    addChessman(SRC(info.move), info.movingChessman);
+    if (info.killedChessman > 0)
+    {
+        addChessman(DST(info.move), info.killedChessman);
+    }
+
+    lstMoveInfo.pop_back();
+    currentTurn = (currentTurn == BLACK ? RED : BLACK);
+    currentSearchMoveTurn = currentTurn;
+    currentZobrist.Xor(initZobrist);
+
+    if (lstMoveInfo.size() > 0)
+    {
+        currentMoveInfo = lstMoveInfo.back();
+    }
+}
+
+void ChessHandler::undoMakeMove(MoveInfo &info)
+{
+    delChessman(DST(info.move), info.movingChessman);
+    addChessman(SRC(info.move), info.movingChessman);
+    if (info.killedChessman > 0)
+    {
+        addChessman(DST(info.move), info.killedChessman);
+    }
+
+    currentSearchMoveTurn = (currentSearchMoveTurn == BLACK ? RED : BLACK);
     currentZobrist.Xor(initZobrist);
 }
 
@@ -371,6 +485,71 @@ int ChessHandler::repValue(int repStatus)
         ((repStatus & 4) == 0 ? 0 : BAN_VALUE);
 
     return retVal == 0 ? ((lstMoveInfo.size() & 1) == 0 ? -DRAW_VALUE : DRAW_VALUE) : retVal;
+}
+
+void ChessHandler::stepTimeOver()
+{
+    if (gameResult == -1)
+    {
+        gameResult = currentTurn == BLACK ? RED : BLACK;
+
+        emit refreshGame(EVENT_GAME_RESULT);
+    }
+}
+
+int ChessHandler::minMaxSearch(int depth, MoveInfo &info)
+{
+    int bestValue = isMySide() ? MATE_VALUE : -MATE_VALUE;
+    int value = 0;
+
+    if (depth == 0)
+    {
+        return evaluate();
+    }
+
+     QList<MoveInfo> lstInfo;
+     moveGenerator.generateAllMove(arrChessman, currentSearchMoveTurn, lstInfo);
+     for (QList<MoveInfo>::iterator it = lstInfo.begin(); it != lstInfo.end(); ++it)
+     {
+         doMakeMove(*it, false);
+         value = minMaxSearch(depth - 1, info);
+         undoMakeMove(*it);
+
+         if (isMySide())
+         {
+             if (value < bestValue)
+             {
+                 bestValue = value;
+                 if (depth == MAX_SEARCH_DEPTH)
+                 {
+                     info = *it;
+                 }
+             }
+         }
+         else
+         {
+             if (value > bestValue)
+             {
+                 bestValue = value;
+                 if (depth == MAX_SEARCH_DEPTH)
+                 {
+                     info = *it;
+                 }
+             }
+         }
+     }
+
+     return bestValue;
+}
+
+int ChessHandler::evaluate()
+{
+    return g_gameSettings.getCompetitorSide() == RED ? redValue - blackValue : blackValue - redValue;
+}
+
+bool ChessHandler::isMySide()
+{
+    return !(g_gameSettings.getCompetitorSide() == currentSearchMoveTurn);
 }
 
 const MoveInfo &ChessHandler::getCurrentMoveInfo()
@@ -428,3 +607,202 @@ void ChessHandler::setChessman(const char *chessman)
     memcpy(arrChessman, chessman, sizeof(arrChessman));
 }
 
+int ChessHandler::getReplyResult()
+{
+    return replyResult;
+}
+
+void ChessHandler::setReplyResult(int result)
+{
+    replyResult = result;
+}
+
+void ChessHandler::processReqGameInfoMsg(QString &msg, int len)
+{
+    Q_UNUSED(msg);
+    assert(len == sizeof(MsgReqGameInfo));
+
+    MsgGameInfo networkMsg;
+    networkMsg.mySide = g_gameSettings.getCompetitorSide();
+    networkMsg.stepTime = g_gameSettings.getStepTime();
+    networkMsg.ahead = g_gameSettings.getAhead();
+    memcpy(networkMsg.arrChessman, arrChessman, sizeof(arrChessman));
+    sendMsg((char *)&networkMsg, sizeof(networkMsg));
+}
+
+void ChessHandler::processGameInfoMsg(QString &msg, int len)
+{
+    assert(len == sizeof(MsgGameInfo));
+    MsgGameInfo *netMsg = (MsgGameInfo *)(msg.toStdString().c_str());
+    g_gameSettings.setCompetitorSide(netMsg->mySide == BLACK ? RED : BLACK);
+    g_gameSettings.setAhead(netMsg->ahead);
+    g_gameSettings.setStepTime(netMsg->stepTime);
+
+    memcpy(arrChessman, netMsg->arrChessman, sizeof(arrChessman));
+}
+
+void ChessHandler::processNewGameMsg(QString &msg, int len)
+{
+    Q_UNUSED(msg);
+    assert(len == sizeof(MsgNewGame));
+    newGame();
+}
+
+void ChessHandler::processChessboardSyncMsg(QString &msg, int len)
+{
+    assert(len == sizeof(MsgChessboardSync));
+    MsgChessboardSync *netMsg = (MsgChessboardSync *)(msg.toStdString().c_str());
+    messGame(netMsg->arrChessman, netMsg->currentTurn);
+}
+
+void ChessHandler::processMoveInfoMsg(QString &msg, int len)
+{
+    assert(len == sizeof(MsgMoveInfo));
+    MsgMoveInfo *netMsg = (MsgMoveInfo *)(msg.toStdString().c_str());
+    currentTurn = netMsg->currentTurn;
+    gameResult = netMsg->gameResult;
+    whoIsDead = netMsg->whoIsDead;
+    currentMoveInfo = netMsg->info;
+    memcpy(arrChessman, netMsg->arrChessman, sizeof(arrChessman));
+    if (SRC(currentMoveInfo.move) > 0 && DST(currentMoveInfo.move) > 0)
+    {
+        lstMoveInfo.push_back(currentMoveInfo);
+    }
+    emit refreshGame(EVENT_UPDATE_MOVE);
+    currentMoveInfo.reset();
+}
+
+void ChessHandler::processTipMsg(QString &msg, int len)
+{
+    assert(len == sizeof(MsgTip));
+    MsgTip *netMsg = (MsgTip *)(msg.toStdString().c_str());
+    switch (netMsg->tipType)
+    {
+    case TIP_REQ_FALLBACK:
+        emit refreshGame(EVENT_REQ_FALLBACK);
+        break;
+    case TIP_REQ_LOSE:
+        emit refreshGame(EVENT_REQ_LOSE);
+        break;
+    case TIP_REQ_TIE:
+        emit refreshGame(EVENT_REQ_TIE);
+        break;
+    default:
+        break;
+    }
+}
+
+void ChessHandler::processTipReplyMsg(QString &msg, int len)
+{
+    assert(len == sizeof(MsgTipReply));
+    MsgTipReply *netMsg = (MsgTipReply *)(msg.toStdString().c_str());
+    replyResult = netMsg->result;
+    switch (netMsg->tipType)
+    {
+    case TIP_REQ_FALLBACK:
+        emit refreshGame(EVENT_REQ_FALLBACK_REPLY);
+        break;
+    case TIP_REQ_LOSE:
+        emit refreshGame(EVENT_REQ_LOSE_REPLY);
+        break;
+    case TIP_REQ_TIE:
+        emit refreshGame(EVENT_REQ_TIE_REPLY);
+        break;
+    default:
+        break;
+    }
+}
+
+void ChessHandler::sendMsg(char *msg, int len)
+{
+    if (g_gameSettings.getServerOrClient() == SERVER_SIDE)
+    {
+        server->sendMsg(msg, len);
+    }
+    else
+    {
+        client->sendMsg(msg, len);
+    }
+}
+
+void ChessHandler::sendTipMsg(int tipType)
+{
+    MsgTip msg;
+    msg.tipType = tipType;
+    msg.reqSide = g_gameSettings.getCompetitorSide() == BLACK ? RED : BLACK;
+    sendMsg((char *)&msg, sizeof(msg));
+}
+
+void ChessHandler::sendTipReplyMsg(int tipType, int result)
+{
+    replyResult = result;
+    MsgTipReply replyMsg;
+    replyMsg.reqSide = g_gameSettings.getCompetitorSide();
+    replyMsg.tipType = tipType;
+    replyMsg.result = result;
+    sendMsg((char *)&replyMsg, sizeof(replyMsg));
+}
+
+void ChessHandler::sendMoveInfoMsg()
+{
+    MsgMoveInfo msg;
+    msg.currentTurn = currentTurn;
+    msg.gameResult = gameResult;
+    msg.whoIsDead = whoIsDead;
+    memcpy(msg.arrChessman, arrChessman, sizeof(arrChessman));
+    msg.info = currentMoveInfo;
+    sendMsg((char *)&msg, sizeof(msg));
+}
+
+void ChessHandler::processMessage(QString msg, int len)
+{
+    BaseNetworkMsg *networkMsg = (BaseNetworkMsg *)(msg.toStdString().c_str());
+
+    switch (networkMsg->msgID)
+    {
+    case MSG_REQ_GAME_INFO:
+        processReqGameInfoMsg(msg, len);
+        break;
+    case MSG_GAME_INFO:
+        processGameInfoMsg(msg, len);
+        break;
+    case MSG_NEW_GAME:
+        processNewGameMsg(msg, len);
+        break;
+    case MSG_CHESSBOARD_SYNC:
+        processChessboardSyncMsg(msg, len);
+        break;
+    case MSG_MOVE_INFO:
+        processMoveInfoMsg(msg, len);
+        break;
+    case MSG_TIP:
+        processTipMsg(msg, len);
+        break;
+    case MSG_TIP_REPLY:
+        processTipReplyMsg(msg, len);
+        break;
+    default:
+        break;
+    }
+
+}
+
+void ChessHandler::connStateChanged(bool status)
+{
+    QString tipMsg;
+    if (status == true)
+    {
+        tipMsg = g_gameSettings.getServerOrClient() == SERVER_SIDE ? tr("客户端已连接。") : tr("服务器已连接。");
+        QMessageBox::about(NULL, tr("提示信息"), tipMsg);
+    }
+    else
+    {
+        tipMsg = g_gameSettings.getServerOrClient() == SERVER_SIDE ? tr("客户端已断开。") : tr("服务器已断开。");
+        tipMsg.append(tr("游戏将进入自由模式"));
+        QMessageBox::about(NULL, tr("提示信息"), tipMsg);
+
+        g_gameSettings.setGameType(COMPITITOR_HUMAN);
+        newGame();
+    }
+
+}

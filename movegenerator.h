@@ -2,6 +2,8 @@
 #define MOVEGENERATOR_H
 #include <QString>
 #include <stdio.h>
+#include <QList>
+#include "commdef.h"
 
 class MoveGenerator
 {
@@ -16,6 +18,17 @@ public:
     bool validateChariotMove(const char *arrChessman, int srcPos, int dstPos);
     bool validateCannonMove(const char *arrChessman, int srcPos, int dstPos);
     bool validateSoldierMove(const char *arrChessman, int srcPos, int dstPos);
+
+    void generateAllMove(char *arrChessman, int side, QList<MoveInfo> &lstInfo);
+    void generateGeneralMove(char *arrChessman, int srcPos, MoveInfo &info, QList<MoveInfo> &lstInfo);
+    void generateAdvisorMove(char *arrChessman, int srcPos, MoveInfo &info, QList<MoveInfo> &lstInfo);
+    void generateMinisterMove(char *arrChessman, int srcPos, MoveInfo &info, QList<MoveInfo> &lstInfo);
+    void generateHorseMove(char *arrChessman, int srcPos, MoveInfo &info, QList<MoveInfo> &lstInfo);
+    void generateChariotMove(char *arrChessman, int srcPos, MoveInfo &info, QList<MoveInfo> &lstInfo);
+    void generateCannonMove(char *arrChessman, int srcPos, MoveInfo &info, QList<MoveInfo> &lstInfo);
+    void generateSoldierMove(char *arrChessman, int srcPos, MoveInfo &info, QList<MoveInfo> &lstInfo);
+
+    void addMoveRoute(char *arrChessman, int srcPos, int dstPos, MoveInfo &info, QList<MoveInfo> &lstInfo);
 
     bool isAttackGeneral(const char *arrChessman, char attackedGeneral);
     bool attackGeneral(const char *arrChessman, int attackedPos, char chessman);

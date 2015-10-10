@@ -22,6 +22,7 @@ public:
     void changeFlip();
 
 public slots:
+
 signals:
     void doMove(int index);
 

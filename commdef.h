@@ -62,12 +62,13 @@ static const int COMPITITOR_HUMAN = 2;
 static const int COMPITITOR_NETWORK = 3;
 static const int CLIENT_SIDE = 1;
 static const int SERVER_SIDE = 2;
+static const int MAX_SEARCH_DEPTH = 3;
 
 static const int CHESSMAN_TYPE_COUNT = 14;
 static const int CHESSBOARD_ROW = 10;
 static const int CHESSBOARD_COLUMN = 9;
-static const int WINDOW_STARTX = 100;
-static const int WINDOW_STARTY = 100;
+static const int WINDOW_STARTX = 0;
+static const int WINDOW_STARTY = 0;
 static const int CHESSBOARD_WIDTH = 521;
 static const int CHESSBOARD_HEIGHT = 577;
 static const int CHESSBOARD_STARTX = 250;
@@ -110,6 +111,18 @@ static const char RED_SOLDIER = 14;      //红兵
 static const int EVENT_NEW_GAME = 1;
 static const int EVENT_UPDATE_MOVE = 2;
 static const int EVENT_ILLEGAL_MOVE = 3;
+static const int EVENT_FALLBACK = 4;
+static const int EVENT_GAME_RESULT = 5;
+static const int EVENT_REQ_FALLBACK = 8;
+static const int EVENT_REQ_FALLBACK_REPLY = 9;
+static const int EVENT_REQ_TIE = 10;
+static const int EVENT_REQ_TIE_REPLY = 11;
+static const int EVENT_REQ_LOSE = 12;
+static const int EVENT_REQ_LOSE_REPLY = 13;
+
+static const int TIP_REQ_FALLBACK = 1;
+static const int TIP_REQ_TIE = 2;
+static const int TIP_REQ_LOSE = 3;
 
 // 判断棋子是否在棋盘中的数组
 static const char ccInBoard[256] = {
@@ -226,13 +239,13 @@ static const char ccKnightPin[512] = {
 };
 
 // 帅(将)的步长
-static const char ccKingDelta[4] = {-16, -1, 1, 16};
+static const char kingDelta[4] = {-16, -1, 1, 16};
 // 仕(士)的步长
-static const char ccAdvisorDelta[4] = {-17, -15, 15, 17};
+static const char advisorDelta[4] = {-17, -15, 15, 17};
 // 马的步长，以帅(将)的步长作为马腿
-static const char ccKnightDelta[4][2] = {{-33, -31}, {-18, 14}, {-14, 18}, {31, 33}};
+static const char knightDelta[4][2] = {{-33, -31}, {-18, 14}, {-14, 18}, {31, 33}};
 // 马被将军的步长，以仕(士)的步长作为马腿
-static const char ccKnightCheckDelta[4][2] = {{-33, -18}, {-31, -14}, {14, 31}, {18, 33}};
+static const char knightCheckDelta[4][2] = {{-33, -18}, {-31, -14}, {14, 31}, {18, 33}};
 
 // 棋盘初始设置
 static const char STARTUP_LAYOUT[256] = {
@@ -400,7 +413,7 @@ static int RANK_FLIP(int y) {
     return 15 - y;
 }
 
-static int getChessboardCoord(int x, int y, bool fliped)
+inline int getChessboardCoord(int x, int y, bool fliped)
 {
     x = fliped ? FILE_FLIP(x) : x;
     y = fliped ? RANK_FLIP(y) : y;
@@ -409,14 +422,14 @@ static int getChessboardCoord(int x, int y, bool fliped)
 }
 
 //获取棋子位置
-static void getPixmapPos(int row, int column, int &xx, int &yy)
+inline void getPixmapPos(int row, int column, int &xx, int &yy)
 {
     xx = BOARD_EDGE + column * SQUARE_SIZE;
     yy = BOARD_EDGE + row * SQUARE_SIZE;
 }
 
 //根据棋盘上的行和列获取在数组中的索引
-static int getChessmanIndex(int row, int column, bool fliped)
+inline int getChessmanIndex(int row, int column, bool fliped)
 {
     int x = column + FILE_LEFT;
     int y = row + RANK_TOP;
@@ -428,129 +441,129 @@ static int getChessmanIndex(int row, int column, bool fliped)
     return COORD_XY(x, y);
 }
 
-static void getPixmapIndex(int xx, int yy, int &row, int &column)
+inline void getPixmapIndex(int xx, int yy, int &row, int &column)
 {
     row = (yy - BOARD_EDGE) / SQUARE_SIZE;
     column = (xx - BOARD_EDGE) / SQUARE_SIZE;
 }
 
 // 判断棋子是否在棋盘中
-static bool IN_BOARD(int sq) {
+inline bool IN_BOARD(int sq) {
     return ccInBoard[sq] != 0;
 }
 
 // 判断棋子是否在九宫中
-static bool IN_FORT(int sq) {
+inline bool IN_FORT(int sq) {
     return ccInFort[sq] != 0;
 }
 
 // 获得格子的纵坐标
-static int RANK_Y(int sq) {
+inline int RANK_Y(int sq) {
     return sq >> 4;
 }
 
 // 获得格子的横坐标
-static int FILE_X(int sq) {
+inline int FILE_X(int sq) {
     return sq & 15;
 }
 
 // 翻转格子
-static int SQUARE_FLIP(int sq) {
+inline int SQUARE_FLIP(int sq) {
     return 254 - sq;
 }
 
 // 格子水平镜像
-static int MIRROR_SQUARE(int sq) {
+inline int MIRROR_SQUARE(int sq) {
     return COORD_XY(FILE_FLIP(FILE_X(sq)), RANK_Y(sq));
 }
 
 // 格子水平镜像
-static int SQUARE_FORWARD(int sq, int sd) {
+inline int SQUARE_FORWARD(int sq, int sd) {
     return sq - 16 + (sd << 5);
 }
 
 // 走法是否符合帅(将)的步长
-static bool KING_SPAN(int sqSrc, int sqDst) {
+inline bool KING_SPAN(int sqSrc, int sqDst) {
     return ccLegalSpan[sqDst - sqSrc + 256] == 1;
 }
 
 // 走法是否符合仕(士)的步长
-static bool ADVISOR_SPAN(int sqSrc, int sqDst) {
+inline bool ADVISOR_SPAN(int sqSrc, int sqDst) {
     return ccLegalSpan[sqDst - sqSrc + 256] == 2;
 }
 
 // 走法是否符合相(象)的步长
-static bool BISHOP_SPAN(int sqSrc, int sqDst) {
+inline bool BISHOP_SPAN(int sqSrc, int sqDst) {
     return ccLegalSpan[sqDst - sqSrc + 256] == 3;
 }
 
 // 相(象)眼的位置
-static int BISHOP_PIN(int sqSrc, int sqDst) {
+inline int BISHOP_PIN(int sqSrc, int sqDst) {
     return (sqSrc + sqDst) >> 1;
 }
 
 // 马腿的位置
-static int KNIGHT_PIN(int sqSrc, int sqDst) {
+inline int KNIGHT_PIN(int sqSrc, int sqDst) {
     return sqSrc + ccKnightPin[sqDst - sqSrc + 256];
 }
 
 // 是否未过河
-static bool HOME_HALF(int sq, int sd) {
+inline bool HOME_HALF(int sq, int sd) {
     return (sq & 0x80) != (sd << 7);
 }
 
 // 是否已过河
-static bool AWAY_HALF(int sq, int sd) {
+inline bool AWAY_HALF(int sq, int sd) {
     return (sq & 0x80) == (sd << 7);
 }
 
 // 是否在河的同一边
-static bool SAME_HALF(int sqSrc, int sqDst) {
+inline bool SAME_HALF(int sqSrc, int sqDst) {
     return ((sqSrc ^ sqDst) & 0x80) == 0;
 }
 
 // 是否在同一行
-static bool SAME_RANK(int sqSrc, int sqDst) {
+inline bool SAME_RANK(int sqSrc, int sqDst) {
     return ((sqSrc ^ sqDst) & 0xf0) == 0;
 }
 
 // 是否在同一列
-static bool SAME_FILE(int sqSrc, int sqDst) {
+inline bool SAME_FILE(int sqSrc, int sqDst) {
     return ((sqSrc ^ sqDst) & 0x0f) == 0;
 }
 
 // 获得走法的起点
-static int SRC(int mv) {
+inline int SRC(int mv) {
   return mv & 255;
 }
 
 // 获得走法的终点
-static int DST(int mv) {
+inline int DST(int mv) {
   return mv >> 8;
 }
 
 // 根据起点和终点获得走法
-static int MOVE(int sqSrc, int sqDst) {
+inline int MOVE(int sqSrc, int sqDst) {
   return sqSrc + (sqDst << 8);
 }
 
-static bool isBlackSide(char chessmanType)
+inline bool isBlackSide(char chessmanType)
 {
     return (chessmanType >= BLACK_GENERAL) && (chessmanType <= BLACK_SOLDIER);
 }
 
-static bool isRedSide(int chessmanType)
+inline bool isRedSide(int chessmanType)
 {
     return (chessmanType >= RED_GENERAL) && (chessmanType <= RED_SOLDIER);
 }
 
-static bool isSameSide(int srcChessmanType, int dstChessmanType)
+inline bool isSameSide(int srcChessmanType, int dstChessmanType)
 {
     return ((isBlackSide(srcChessmanType) && isBlackSide(dstChessmanType))
             || (isRedSide(srcChessmanType) && isRedSide(dstChessmanType)));
 }
 
-static QString getChessmanPic(char chessman, bool selected, bool dead)
+inline QString getChessmanPic(char chessman, bool selected, bool dead)
 {
     QString chessmanPic;
     switch(chessman)
@@ -636,7 +649,7 @@ static QString getChessmanPic(char chessman, bool selected, bool dead)
     return chessmanPic;
 }
 
-static int getChessmanTypeByCode(QChar code)
+inline int getChessmanTypeByCode(QChar code)
 {
     int chessmanType = 0;
     for (int i = 0; i < 14; ++i)
@@ -649,6 +662,18 @@ static int getChessmanTypeByCode(QChar code)
     }
 
     return chessmanType;
+}
+
+inline QString convertToTimeStr(int seconds)
+{
+    QString time;
+
+    int hour = seconds / 3600;
+    int minute = (seconds - hour * 3600) / 60;
+    int second = seconds - hour * 3600 - minute * 60;
+    time.sprintf("%.2d:%.2d:%.2d", hour, minute, second);
+
+    return time;
 }
 
 #endif // COMMDEF

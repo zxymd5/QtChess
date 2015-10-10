@@ -1,6 +1,7 @@
 #include "settingsdialog.h"
 #include "ui_settingsdialog.h"
 #include "gamesettings.h"
+#include "commdef.h"
 #include <QStringList>
 
 SettingsDialog::SettingsDialog(QWidget *parent) :
@@ -10,6 +11,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     ui->setupUi(this);
     connect(ui->btnApply, SIGNAL(clicked()), this, SLOT(apply()));
     connect(ui->btnConfirm, SIGNAL(clicked()), this, SLOT(confirm()));
+    connect(ui->cmbServerOrClient, SIGNAL(currentIndexChanged(int)), this, SLOT(serverOrClientChange(int)));
 }
 
 SettingsDialog::~SettingsDialog()
@@ -54,11 +56,30 @@ void SettingsDialog::closeEvent(QCloseEvent *event)
 
 void SettingsDialog::apply()
 {
-
+    g_gameSettings.setGameType(ui->cmbGameType->currentIndex() + 1);
+    g_gameSettings.setCompetitorSide(ui->cmbCompetitorSide->currentIndex() + 1);
+    g_gameSettings.setAhead(ui->cmbAhead->currentIndex() + 1);
+    g_gameSettings.setStepTime(ui->ledStepTime->text().toInt());
+    g_gameSettings.setServerOrClient(ui->cmbServerOrClient->currentIndex() + 1);
+    g_gameSettings.setIpAddr(ui->ledIpAddr->text());
+    g_gameSettings.setPort(ui->ledPort->text().toInt());
 }
 
 void SettingsDialog::confirm()
 {
     apply();
     QDialog::accept();
+}
+
+void SettingsDialog::serverOrClientChange(int index)
+{
+    if (index + 1 == SERVER_SIDE)
+    {
+        ui->ledIpAddr->setText(tr("localhost"));
+        ui->ledIpAddr->setEnabled(false);
+    }
+    else
+    {
+        ui->ledIpAddr->setEnabled(true);
+    }
 }

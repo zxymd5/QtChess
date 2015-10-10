@@ -23,6 +23,7 @@ protected:
 private slots:
     void apply();
     void confirm();
+    void serverOrClientChange(int index);
 
 private:
     Ui::SettingsDialog *ui;

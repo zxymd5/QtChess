@@ -40,6 +40,11 @@ void StepList::initPushButtons()
     btnNextPage = new QPushButton(">>", this);
     btnNextPage->setGeometry(150, 570, 40, 40);
 
+    btnPrevPage->setEnabled(false);
+    btnPrevRecord->setEnabled(false);
+    btnNextRecord->setEnabled(false);
+    btnNextPage->setEnabled(false);
+
     connect(btnPrevPage, SIGNAL(clicked()), this, SLOT(prevPage()));
     connect(btnPrevRecord, SIGNAL(clicked()), this, SLOT(prevRecord()));
     connect(btnNextRecord, SIGNAL(clicked()), this, SLOT(nextRecord()));
@@ -70,18 +75,6 @@ void StepList::initTableView()
     tableView->setColumnWidth(1, 70);
     tableView->setColumnWidth(2, 75);
     tableView->setFixedSize(200, 480);
-
-//    QModelIndex index;
-//    for(int i = 0; i < 15; i++)
-//    {
-//        for(int j = 0; j < 3; j++)
-//        {
-//            index = model->index(i, j, QModelIndex());
-//            model->setData(index, tr("炮四平五"));
-//        }
-//    }
-
-//    tableView->setCurrentIndex(index);
 }
 
 void StepList::addMoveHistory(const MoveInfo &info)
@@ -111,6 +104,16 @@ int StepList::getPageNumber(int orderNumber)
 int StepList::getRecordIndex(int orderNumber)
 {
     return orderNumber % MOVE_STEP_PER_PAGE == 0 ? MOVE_STEP_PER_PAGE : orderNumber % MOVE_STEP_PER_PAGE;
+}
+
+void StepList::fallbackMoveHistory()
+{
+    if (vecMoveHistory.size() > 0)
+    {
+        vecMoveHistory.pop_back();
+        currentOrderNumber = vecMoveHistory.size();
+        updateHistoryDisplay();
+    }
 }
 
 void StepList::prevRecord()
@@ -159,6 +162,7 @@ void StepList::updateHistoryDisplay()
         btnPrevRecord->setEnabled(false);
         btnNextRecord->setEnabled(false);
         btnNextPage->setEnabled(false);
+        tableView->clearSelection();
     }
     else
     {
