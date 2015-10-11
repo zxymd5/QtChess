@@ -143,6 +143,9 @@
    </property>
   </action>
   <action name="actionOpen">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="qtchess.qrc">
      <normaloff>:/images/fileopen.png</normaloff>:/images/fileopen.png</iconset>
@@ -161,6 +164,9 @@
    </property>
   </action>
   <action name="actionNewGame">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="qtchess.qrc">
      <normaloff>:/images/newgame.png</normaloff>:/images/newgame.png</iconset>
@@ -170,6 +176,9 @@
    </property>
   </action>
   <action name="actionTie">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="qtchess.qrc">
      <normaloff>:/images/tie.png</normaloff>:/images/tie.png</iconset>
@@ -179,6 +188,9 @@
    </property>
   </action>
   <action name="actionUndo">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="qtchess.qrc">
      <normaloff>:/images/fallback.png</normaloff>:/images/fallback.png</iconset>
@@ -188,6 +200,9 @@
    </property>
   </action>
   <action name="actionLose">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="qtchess.qrc">
      <normaloff>:/images/fail.png</normaloff>:/images/fail.png</iconset>
@@ -206,6 +221,9 @@
    </property>
   </action>
   <action name="actionSettings">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="qtchess.qrc">
      <normaloff>:/images/settings.png</normaloff>:/images/settings.png</iconset>
@@ -215,6 +233,9 @@
    </property>
   </action>
   <action name="actionSave">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="qtchess.qrc">
      <normaloff>:/images/filesave.png</normaloff>:/images/filesave.png</iconset>
@@ -224,6 +245,9 @@
    </property>
   </action>
   <action name="actionFlip">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="qtchess.qrc">
      <normaloff>:/images/flip.png</normaloff>:/images/flip.png</iconset>

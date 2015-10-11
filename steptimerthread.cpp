@@ -18,10 +18,8 @@ void StepTimerThread::run()
     mainWin->stepTimeMutex.lock();
     while (mainWin->getStepInterval() == 0)
     {
-        if(mainWin->gameStartCond.wait(&mainWin->stepTimeMutex) == true)
-        {
-            mainWin->setStepInterval(g_gameSettings.getStepTime());
-        }
+        mainWin->gameStartCond.wait(&mainWin->stepTimeMutex, 500);
+        mainWin->setStepInterval(g_gameSettings.getStepTime());
     }
     mainWin->stepTimeMutex.unlock();
     mainWin->displayStepTime(mainWin->getStepInterval());

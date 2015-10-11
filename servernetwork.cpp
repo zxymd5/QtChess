@@ -18,12 +18,6 @@ ServerNetwork::~ServerNetwork()
         server = NULL;
     }
 
-    if (serverSocket != NULL)
-    {
-        delete serverSocket;
-        serverSocket = NULL;
-    }
-
 }
 
 void ServerNetwork::initServer(int port)
@@ -48,32 +42,21 @@ void ServerNetwork::newConnection()
     connect(serverSocket, SIGNAL(disconnected()), serverSocket, SLOT(deleteLater()));
     connect(serverSocket, SIGNAL(readyRead()), this, SLOT(readData()));
 
-    //QMessageBox::about(NULL, tr("提示信息"), tr("已成功连接上客户端！"));
     emit connStateChanged(true);
 }
 
 void ServerNetwork::disconnected()
 {
     emit connStateChanged(false);
-    qDebug() << "disconnected";
 }
 
 void ServerNetwork::readData()
 {
-     QByteArray data;
-     QString strData;
-
      char msg[1024];
      memset(msg, 0, 1024);
 
-//    while (serverSocket->bytesAvailable()) {
-//        data = serverSocket->readLine();
-//        strData.append(data);
-//    }
      int len = serverSocket->read(msg, 1024);
 
     emit processMessage(msg, len);
-//    qDebug() << "ReadData:" << strData;
-//    serverSocket->write(strData.toLatin1(), strData.length());
 }
 

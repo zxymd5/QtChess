@@ -20,7 +20,7 @@ public:
     void newGame();
     void messGame(const char *chessman, int turn);
     void fallback();
-    void loseGame();
+    void loseGame(int reqSide);
     void drawnGame();
     void reset(int turn);
     void resetZobrist();
@@ -52,8 +52,13 @@ public:
     int getCurrentTurn();
     void setCurrentTurn(int turn);
     void setChessman(const char *arrChessman);
-    int getReplyResult();
-    void setReplyResult(int result);
+    int getTipReplyResult();
+    void setTipReplyResult(int result);
+    int getTipType();
+    void setTipType(int type);
+    void doAsTipResult(int type, int result, int reqSide);
+    void setTipReqSide(int side);
+    void setExitGame(bool exit);
 
     void processReqGameInfoMsg(char *msg, int len);
     void processGameInfoMsg(char *msg, int len);
@@ -67,6 +72,7 @@ public:
     void sendTipReplyMsg(int tipType, int result);
     void sendMoveInfoMsg();
     void sendNewGameMsg();
+    void sendChessBoardSyncMsg();
 
 signals:
     void refreshGame(int refreshType);
@@ -81,12 +87,15 @@ private:
     int currentSearchMoveTurn;
     int gameResult;
     char whoIsDead;
+    bool exitGame;
     MoveGenerator moveGenerator;
     QList<MoveInfo> lstMoveInfo;
     MoveInfo currentMoveInfo;
     ServerNetwork *server;
     ClientNetwork *client;
-    int replyResult;
+    int tipReplyResult;
+    int tipType;
+    int tipReqSide;
 
     //子力值
     int blackValue;

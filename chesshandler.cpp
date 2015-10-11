@@ -81,11 +81,11 @@ void ChessHandler::fallback()
     }
 }
 
-void ChessHandler::loseGame()
+void ChessHandler::loseGame(int reqSide)
 {
     if (gameResult == -1)
     {
-        gameResult = g_gameSettings.getCompetitorSide();
+        gameResult = reqSide == RED ? BLACK : RED ;
         emit refreshGame(EVENT_GAME_RESULT);
     }
 }
@@ -109,7 +109,10 @@ void ChessHandler::reset(int turn)
     blackValue = 0;
     redValue = 0;
     memset(arrChessman, 0, sizeof(arrChessman));
-    replyResult = 0;
+    tipReplyResult = 0;
+    tipType = 0;
+    tipReqSide = 0;
+    exitGame = false;
 }
 
 void ChessHandler::resetZobrist()
@@ -611,14 +614,24 @@ void ChessHandler::setChessman(const char *chessman)
     memcpy(arrChessman, chessman, sizeof(arrChessman));
 }
 
-int ChessHandler::getReplyResult()
+int ChessHandler::getTipReplyResult()
 {
-    return replyResult;
+    return tipReplyResult;
 }
 
-void ChessHandler::setReplyResult(int result)
+void ChessHandler::setTipReplyResult(int result)
 {
-    replyResult = result;
+    tipReplyResult = result;
+}
+
+int ChessHandler::getTipType()
+{
+    return tipType;
+}
+
+void ChessHandler::setTipType(int type)
+{
+    tipType = type;
 }
 
 void ChessHandler::processReqGameInfoMsg(char *msg, int len)
@@ -689,6 +702,8 @@ void ChessHandler::processTipMsg(char *msg, int len)
 {
     assert(len == sizeof(MsgTip));
     MsgTip *netMsg = (MsgTip *)msg;
+    tipType = netMsg->tipType;
+    tipReqSide = netMsg->reqSide;
     switch (netMsg->tipType)
     {
     case TIP_REQ_FALLBACK:
@@ -709,7 +724,7 @@ void ChessHandler::processTipReplyMsg(char *msg, int len)
 {
     assert(len == sizeof(MsgTipReply));
     MsgTipReply *netMsg = (MsgTipReply *)msg;
-    replyResult = netMsg->result;
+    tipReplyResult = netMsg->result;
     switch (netMsg->tipType)
     {
     case TIP_REQ_FALLBACK:
@@ -724,6 +739,39 @@ void ChessHandler::processTipReplyMsg(char *msg, int len)
     default:
         break;
     }
+
+    doAsTipResult(netMsg->tipType, netMsg->result, netMsg->reqSide);
+}
+
+void ChessHandler::doAsTipResult(int type, int result, int reqSide)
+{
+    if (result == 1)
+    {
+        switch (type)
+        {
+        case TIP_REQ_FALLBACK:
+            fallback();
+            break;
+        case TIP_REQ_LOSE:
+            loseGame(reqSide);
+            break;
+        case TIP_REQ_TIE:
+            drawnGame();
+            break;
+        default:
+            break;
+        }
+    }
+}
+
+void ChessHandler::setTipReqSide(int side)
+{
+    tipReqSide = side;
+}
+
+void ChessHandler::setExitGame(bool exit)
+{
+    exitGame = exit;
 }
 
 void ChessHandler::sendMsg(char *msg, int len)
@@ -738,17 +786,18 @@ void ChessHandler::sendMsg(char *msg, int len)
     }
 }
 
-void ChessHandler::sendTipMsg(int tipType)
+void ChessHandler::sendTipMsg(int type)
 {
     MsgTip msg;
-    msg.tipType = tipType;
+    msg.tipType = type;
     msg.reqSide = g_gameSettings.getCompetitorSide() == BLACK ? RED : BLACK;
     sendMsg((char *)&msg, sizeof(msg));
+    tipType = type;
 }
 
 void ChessHandler::sendTipReplyMsg(int tipType, int result)
 {
-    replyResult = result;
+    tipReplyResult = result;
     MsgTipReply replyMsg;
     replyMsg.reqSide = g_gameSettings.getCompetitorSide();
     replyMsg.tipType = tipType;
@@ -778,7 +827,17 @@ void ChessHandler::sendMoveInfoMsg()
 void ChessHandler::sendNewGameMsg()
 {
     MsgNewGame msg;
-    memcpy(msg.arrChessman, STARTUP_LAYOUT, sizeof(msg.arrChessman));
+    memcpy(msg.arrChessman, arrChessman, sizeof(msg.arrChessman));
+    sendMsg((char *)&msg, sizeof(msg));
+}
+
+void ChessHandler::sendChessBoardSyncMsg()
+{
+    MsgChessboardSync msg;
+    msg.currentTurn = currentTurn;
+    memcpy(msg.arrChessman, arrChessman, sizeof(msg.arrChessman));
+    msg.gameResult = gameResult;
+    msg.whoIsDead = whoIsDead;
     sendMsg((char *)&msg, sizeof(msg));
 }
 
@@ -817,6 +876,11 @@ void ChessHandler::processMessage(char *msg, int len)
 
 void ChessHandler::connStateChanged(bool status)
 {
+    if(exitGame)
+    {
+        return;
+    }
+
     QString tipMsg;
     if (status == true)
     {

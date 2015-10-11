@@ -240,13 +240,13 @@ static const char ccKnightPin[512] = {
 };
 
 // 帅(将)的步长
-static const char kingDelta[4] = {-16, -1, 1, 16};
+static const char KING_DELTA[4] = {-16, -1, 1, 16};
 // 仕(士)的步长
-static const char advisorDelta[4] = {-17, -15, 15, 17};
+static const char ADVISOR_DELTA[4] = {-17, -15, 15, 17};
 // 马的步长，以帅(将)的步长作为马腿
 static const char knightDelta[4][2] = {{-33, -31}, {-18, 14}, {-14, 18}, {31, 33}};
 // 马被将军的步长，以仕(士)的步长作为马腿
-static const char knightCheckDelta[4][2] = {{-33, -18}, {-31, -14}, {14, 31}, {18, 33}};
+static const char KNIGHT_CHECK_DELTA[4][2] = {{-33, -18}, {-31, -14}, {14, 31}, {18, 33}};
 
 // 棋盘初始设置
 static const char STARTUP_LAYOUT[256] = {
@@ -400,17 +400,17 @@ static const int CHESSMAN_VALUE[7][256] = {
 };
 
 // 根据纵坐标和横坐标获得格子
-static int COORD_XY(int x, int y) {
+inline int COORD_XY(int x, int y) {
     return x + (y << 4);
 }
 
 // 纵坐标水平镜像
-static int FILE_FLIP(int x) {
+inline int FILE_FLIP(int x) {
     return 14 - x;
 }
 
 // 横坐标垂直镜像
-static int RANK_FLIP(int y) {
+inline int RANK_FLIP(int y) {
     return 15 - y;
 }
 

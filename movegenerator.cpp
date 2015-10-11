@@ -239,7 +239,7 @@ void MoveGenerator::generateGeneralMove(char *arrChessman, int srcPos, MoveInfo 
     int dstPos;
     for (int i = 0; i < 4; ++i)
     {
-        dstPos = srcPos + kingDelta[i];
+        dstPos = srcPos + KING_DELTA[i];
         if (validateGeneralMove(arrChessman, srcPos, dstPos))
         {
             addMoveRoute(arrChessman, srcPos, dstPos, info, lstInfo);
@@ -252,7 +252,7 @@ void MoveGenerator::generateAdvisorMove(char *arrChessman, int srcPos, MoveInfo 
     int dstPos;
     for (int i = 0; i < 4; ++i)
     {
-        dstPos = srcPos + advisorDelta[i];
+        dstPos = srcPos + ADVISOR_DELTA[i];
         if (validateAdvisorMove(arrChessman, srcPos, dstPos))
         {
             addMoveRoute(arrChessman, srcPos, dstPos, info, lstInfo);
@@ -265,7 +265,7 @@ void MoveGenerator::generateMinisterMove(char *arrChessman, int srcPos, MoveInfo
     int dstPos;
     for (int i = 0; i < 4; ++i)
     {
-        dstPos = srcPos + 2 * advisorDelta[i];
+        dstPos = srcPos + 2 * ADVISOR_DELTA[i];
         if (validateMinisterMove(arrChessman, srcPos, dstPos))
         {
             addMoveRoute(arrChessman, srcPos, dstPos, info, lstInfo);
@@ -278,7 +278,7 @@ void MoveGenerator::generateHorseMove(char *arrChessman, int srcPos, MoveInfo &i
     int dstPos;
     for (int i = 0; i < 4; ++i)
     {
-        dstPos = srcPos + kingDelta[i];
+        dstPos = srcPos + KING_DELTA[i];
         if (arrChessman[dstPos] != 0)
         {
             continue;
@@ -286,7 +286,7 @@ void MoveGenerator::generateHorseMove(char *arrChessman, int srcPos, MoveInfo &i
 
         for (int j = 0; j < 2; ++j)
         {
-            dstPos = srcPos + knightCheckDelta[i][j];
+            dstPos = srcPos + KNIGHT_CHECK_DELTA[i][j];
             if (validateHorseMove(arrChessman, srcPos, dstPos))
             {
                 addMoveRoute(arrChessman, srcPos, dstPos, info, lstInfo);
@@ -362,7 +362,7 @@ void MoveGenerator::generateSoldierMove(char *arrChessman, int srcPos, MoveInfo 
     int dstPos = 0;
     for (int i = 0; i < 4; ++i)
     {
-        dstPos = srcPos + kingDelta[i];
+        dstPos = srcPos + KING_DELTA[i];
         if (validateSoldierMove(arrChessman, srcPos, dstPos))
         {
             addMoveRoute(arrChessman, srcPos, dstPos, info, lstInfo);

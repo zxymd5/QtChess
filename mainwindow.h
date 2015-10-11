@@ -50,6 +50,9 @@ public:
     QWaitCondition gameStartCond;
     QWaitCondition stepOverCond;
 
+protected:
+    void closeEvent(QCloseEvent *e);
+
 private slots:
     void startGame();
     void newGame();
@@ -61,7 +64,6 @@ private slots:
     void loseGame();
     void drawnGame();
     void about();
-
     void doMove(int index);
 
     void processEvent(int event);
@@ -78,7 +80,6 @@ private:
     MoveInfo lastMoveInfo;
     int stepInterval;
     StepTimerThread timerThread;
-    int tipType;
 };
 
 #endif // MAINWINDOW_H
