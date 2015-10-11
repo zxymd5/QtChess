@@ -13,7 +13,6 @@ ChessBoard::ChessBoard(QWidget *parent) : QWidget(parent)
 
 ChessBoard::~ChessBoard()
 {
-    int m = 0;
 }
 
 void ChessBoard::paintEvent(QPaintEvent *event)
