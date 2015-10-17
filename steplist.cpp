@@ -26,7 +26,47 @@ StepList::StepList(QWidget *parent, bool left) : QWidget(parent)
 
 StepList::~StepList()
 {
+    if (tableView != NULL)
+    {
+        delete tableView;
+        tableView = NULL;
+    }
 
+    if (model != NULL)
+    {
+        delete model;
+        model = NULL;
+    }
+
+    if (btnPrevRecord != NULL)
+    {
+        delete btnPrevRecord;
+        btnPrevRecord = NULL;
+    }
+
+    if (btnPrevPage != NULL)
+    {
+        delete btnPrevPage;
+        btnPrevPage = NULL;
+    }
+
+    if (btnNextRecord != NULL)
+    {
+        delete btnNextRecord;
+        btnNextRecord = NULL;
+    }
+
+    if (btnNextPage != NULL)
+    {
+        delete btnNextPage;
+        btnNextPage = NULL;
+    }
+
+    if (lblPageInfo != NULL)
+    {
+        delete lblPageInfo;
+        lblPageInfo = NULL;
+    }
 }
 
 void StepList::initPushButtons()

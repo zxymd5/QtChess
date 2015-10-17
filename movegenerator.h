@@ -53,7 +53,7 @@ public:
     static void alphaFmtToChiness(const QString &alphaFmt, QString &chineseFmt, bool black);
 
     //保存棋局结果为FEN串
-    static QString chessmanToFEN(const char *arrchessman, int currentTurn);
+    static QString chessmanToFEN(const char *arrChessman, int currentTurn);
     //从FEE串加载棋局
     static void FENTochessman(QString strFEN, char *arrChessman, int &currentTurn);
 
